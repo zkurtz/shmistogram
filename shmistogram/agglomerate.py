@@ -63,6 +63,7 @@ def collapse_one(bins, k):
     :param k: Index of row to collapse with (k+1)th row
     :return: same as bins but one fewer row due to collapsing
     '''
+    # Here 'dfm' stands for 2-row Data Frame to be Merged
     dfm = bins.iloc[k:k+2]
     df = pd.DataFrame({
         'freq': dfm.freq.sum(),
@@ -70,6 +71,7 @@ def collapse_one(bins, k):
         'ub': dfm.lb.values[-1],
         'width': dfm.width.sum()
     }, index=[0])
+    assert (df.ub - df.lb).min() > 0
     df['rate'] = df.freq / df.width
     return pd.concat([
         bins.iloc[:k],

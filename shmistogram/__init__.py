@@ -9,11 +9,12 @@ class SeriesTable(object):
     def __init__(self, series, compute_empirical_p=False):
         self.n = len(series)
         self.name = series.name
-        self.df = pd.DataFrame(series.value_counts(sort=False))
+        self.df = pd.DataFrame(series.value_counts(sort=False)).sort_index()
         self.df.rename(columns={series.name: 'n_obs'}, inplace=True)
         if compute_empirical_p:
             self.df['empirical_p'] = self.df.n_obs/len(series)
         self.compute_empirical_p = compute_empirical_p
+        assert self.df.index.is_monotonic
 
     def select(self, idxs):
         ''' Return a copy of self that includes only a subset of the values '''
@@ -50,6 +51,8 @@ class Shmistogram(object):
         Break observations into 'loners' and the 'crowd'. The total distribution
         will be a mixture between a multinomial (for the loners) and
         a piecewise uniform distribution (for the crowd)
+
+        :param st: (SeriesTable)
         '''
         assert isinstance(st, SeriesTable)
         idx = st.df.index
@@ -73,6 +76,9 @@ class Shmistogram(object):
         return stats_dict
 
     def _bins_init(self):
+        # Prior to beginning any agglomeration routine, we do a course pre-binning
+        #   by simple dividing the data into approximately equal-sized groups (leading
+        #   to non-uniform bin widths)
         nc = self.crowd.df.shape[0]
         prebin_maxbins = min(nc, 10) # TODO: make 10 an argument
         bin_idxs = np.array_split(np.arange(nc), prebin_maxbins)
@@ -82,6 +88,7 @@ class Shmistogram(object):
         bins.lb = [bins.lb.values[0]] + cuts
         bins.ub = cuts + [bins.ub.values[-1]]
         bins['width'] = bins.ub - bins.lb
+        assert bins.width.min() > 0
         bins['rate'] =  bins.freq/bins.width
         return bins
 

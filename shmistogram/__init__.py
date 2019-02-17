@@ -8,13 +8,17 @@ from . import agglomerate as agg
 class SeriesTable(object):
     def __init__(self, series, compute_empirical_p=False):
         self.n = len(series)
-        self.name = series.name
-        self.df = pd.DataFrame(series.value_counts(sort=False)).sort_index()
-        self.df.rename(columns={series.name: 'n_obs'}, inplace=True)
+        if series.name is None:
+            self.name = 0
+        else:
+            self.name = series.name
+        vc = series.value_counts(sort=False, dropna=False)
+        self.df = pd.DataFrame(vc).sort_index()
+        self.df.rename(columns={self.name: 'n_obs'}, inplace=True)
         if compute_empirical_p:
             self.df['empirical_p'] = self.df.n_obs/len(series)
         self.compute_empirical_p = compute_empirical_p
-        assert self.df.index.is_monotonic
+        assert self.df[~np.isnan(self.df.index)].index.is_monotonic
 
     def select(self, idxs):
         ''' Return a copy of self that includes only a subset of the values '''
@@ -56,7 +60,7 @@ class Shmistogram(object):
         '''
         assert isinstance(st, SeriesTable)
         idx = st.df.index
-        is_loner = (st.df.n_obs >= self.loner_min_count)
+        is_loner = (st.df.n_obs >= self.loner_min_count) | np.isnan(st.df.index.values)
         which_loners = idx[is_loner].tolist()
         which_crowd = idx[~is_loner].tolist()
         if self.max_bins is None:

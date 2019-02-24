@@ -12,7 +12,7 @@ uses reticulate to access the python module as a back-end and offers a plotting 
 
 ## Example
 
-See [demo.Rmd](demo.Rmd) and its output [demo.html](demo.html)
+See [demo.Rmd](demo.Rmd) and its output [demo.md](demo.md)
 
 ## Installation
 

@@ -1,9 +1,14 @@
 Shmistogram plots
 ================
 
+([source](demo.Rmd) and [README](README.md))
+
 ### Mixed data types
 
-A shmistogram highlights point masses that may occur in a continuous variable, explicitly decomposing the distribution into a mixture of a multinomial and a piecewise uniform distribution. Such point masses are quite common: - inconsistent rounding any continuous variable can introduce a mixture of point masses and relatively continuous observations - "age of earning first driver's license" plausibly has structural modes at the legal minimum (which may vary by state) and otherwise vary continuously
+A shmistogram highlights point masses that may occur in a continuous variable, explicitly decomposing the distribution into a mixture of a multinomial and a piecewise uniform distribution. Such point masses are quite common:
+
+-   inconsistent rounding any continuous variable can introduce a mixture of point masses and relatively continuous observations
+-   "age of earning first driver's license" plausibly has structural modes at the legal minimum (which may vary by state) and otherwise vary continuously
 
 Let's simulate a uniform distribution mixed with a two point masses and a couple missing observations:
 

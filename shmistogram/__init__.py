@@ -1,7 +1,6 @@
 from copy import deepcopy
 import numpy as np
 import pandas as pd
-import pdb
 
 from . import agglomerate as agg
 
@@ -29,6 +28,18 @@ class SeriesTable(object):
             st.df['empirical_p'] /= st.df['empirical_p'].sum()
         return st
 
+    def df2R(self):
+        ''' Return a dict that separates the np.nan count from all other counts,
+        since conversion of pandas df to R data.frame fails on an np.nan index
+        '''
+        if np.nan in self.df.index:
+            return {
+                'missing': self.df.loc[np.nan].n_obs,
+                'df': self.df[~np.isnan(self.df.index)]
+            }
+        else:
+            return {'missing': 0, 'df': self.df}
+
 class Shmistogram(object):
     def __init__(self, x, loner_min_count=10, max_bins=None, prebin_maxbins=1000):
         '''
@@ -50,7 +61,7 @@ class Shmistogram(object):
             x = pd.Series(x)
         series_table = SeriesTable(x)
         self._tabulate_loners_and_the_crowd(series_table)
-        self.n_loners = self.loners
+        self.n_loners = self.loners.n
         self._agglomerate_crowd()
 
     def _tabulate_loners_and_the_crowd(self, st):
@@ -112,7 +123,6 @@ class Shmistogram(object):
                 assert bins.width.min() > 0
             except:
                 raise Exception("The bin width is 0, which should not be possible")
-                #pdb.set_trace()
         bins['rate'] =  bins.freq/bins.width
         return bins
 
@@ -123,7 +133,6 @@ class Shmistogram(object):
             fms = agg.forward_merge_score(bins)
             bins = agg.collapse_one(bins, np.argmax(fms))
         self.bins = bins
-
 
     def plot(self):
         # TODO

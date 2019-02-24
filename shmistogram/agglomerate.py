@@ -68,10 +68,10 @@ def collapse_one(bins, k):
     df = pd.DataFrame({
         'freq': dfm.freq.sum(),
         'lb': dfm.lb.values[0],
-        'ub': dfm.lb.values[-1],
-        'width': dfm.width.sum()
+        'ub': dfm.ub.values[-1]
     }, index=[0])
     assert (df.ub - df.lb).min() > 0
+    df['width'] = df.ub - df.lb
     df['rate'] = df.freq / df.width
     return pd.concat([
         bins.iloc[:k],

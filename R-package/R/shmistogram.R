@@ -149,7 +149,7 @@ SegmentShmistogram = R6::R6Class(
                 loners = loners
             )
         },
-        plot = function(legend=TRUE){
+        plot = function(legend=TRUE, ...){
             DT = data.table::data.table(self$data$crowd)
             N = nrow(DT)
             if(N == 0){
@@ -166,7 +166,9 @@ SegmentShmistogram = R6::R6Class(
             }
             plot(x=c(xmin, xmax), y=c(0, ymax),
                 type='n', bty='n',
-                xlab='Values', ylab='Frequency rate'
+                xlab='values', ylab='frequency rate',
+                main='Shmistogram',
+                ...
             )
             if(legend){
                 self$add_legend_bar(max_rate, xmin, xmax)
@@ -260,7 +262,7 @@ SegmentShmistogram = R6::R6Class(
 )
 
 
-shmistogram = function(data, kind='segment'){
+shmistogram = function(data, kind='segment', ...){
     if(kind=='segment'){
         rshm = SegmentShmistogram$new(data)
     }else if(kind=='block'){
@@ -268,5 +270,5 @@ shmistogram = function(data, kind='segment'){
     }else{
         stop(paste0("kind = ", kind, " not recognized"))
     }
-    rshm$plot()
+    rshm$plot(...)
 }

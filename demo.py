@@ -4,7 +4,7 @@ import pdb
 import shmistogram as shmist
 
 # Simulate a mixture of a uniform distribution mixed with a few point masses
-unif = np.random.uniform(low=-10, high=100, size=100)
+unif = np.random.uniform(low=-10, high=100, size=200)
 multi = np.array([0]*20 + [42]*10 + [np.nan]*2)
 data = np.concatenate((unif, multi))
 

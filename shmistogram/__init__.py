@@ -1,6 +1,7 @@
 from copy import deepcopy
 import numpy as np
 import pandas as pd
+import pdb
 
 from . import agglomerate as agg
 
@@ -41,7 +42,7 @@ class SeriesTable(object):
             return {'missing': 0, 'df': self.df}
 
 class Shmistogram(object):
-    def __init__(self, x, loner_min_count=10, max_bins=None, prebin_maxbins=1000):
+    def __init__(self, x, loner_min_count=10, max_bins=None, prebin_maxbins=100):
         '''
 
         :param x: series-like object (pandas.Series, numpy 1-d array, flat list)

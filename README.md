@@ -19,9 +19,6 @@ Clone this repo and do `python setup.py install` to install the python module.
 Install the R package from github as 
 `devtools::install_github("zkurtz/shmistogram/R-package")`
 
-## Example
-
-See [demo.Rmd](demo.Rmd) and its output [demo.md](demo.md)
 Examples
 --------
 

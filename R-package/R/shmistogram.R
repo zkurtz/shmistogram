@@ -3,6 +3,8 @@ SegmentShmistogram = R6::R6Class(
     public = list(
         data = NULL,
         DT = NULL,
+        share = NULL,
+        n_data_types = NULL,
         initialize = function(data){
             shm = pyshmistogram$Shmistogram(data)
             self$unpack_data(shm)
@@ -22,6 +24,13 @@ SegmentShmistogram = R6::R6Class(
                 crowd = crowd,
                 loners = loners
             )
+            n_all = self$data$n$n + self$data$n$na
+            self$share = list(
+                loners = self$data$n$loners/n_all,
+                crowd = self$data$n$crowd/n_all,
+                missing = self$data$n$na/n_all
+            )
+            self$n_data_types = sum(self$share > 0)
         },
         plot = function(legend=TRUE, loner_axis=TRUE, ...){
             DT = data.table::data.table(self$data$crowd)
@@ -31,6 +40,7 @@ SegmentShmistogram = R6::R6Class(
                 print(self$data$loners)
                 return()
             }
+            if(self$n_data_types < 2) legend=FALSE
             xmin = DT$lb[1]
             xmax = DT$ub[N]
             max_rate = max(DT$rate)
@@ -47,9 +57,7 @@ SegmentShmistogram = R6::R6Class(
                 main='Shmistogram',
                 ...
             )
-            if(legend){
-                self$add_legend_bar(max_rate, xmin, xmax)
-            }
+            if(legend) self$add_legend_bar(max_rate, xmin, xmax)
             # Plot crowd
             for(k in 1:N){
                 rect(
@@ -82,35 +90,26 @@ SegmentShmistogram = R6::R6Class(
             }
         },
         add_legend_bar = function(max_rate, xmin, xmax){
-            n_all = self$data$n$n + self$data$n$na
-            share = list(
-                loner = self$data$n$loners/n_all,
-                crowd = self$data$n$crowd/n_all,
-                missing = self$data$n$na/n_all
-            )
-            if(sum(share > 0) < 2){
-                # Then the legend is vacuous ...
-                return()
-            }
+            share = self$share
             lymin = max_rate*1.03
             lymid = max_rate*1.07
             xrange = xmax-xmin
             barxl = xmin + 0.08*xrange
             barxr = xmin + 0.92*xrange
-            xr1 = barxl + share$loner*(barxr - barxl)
+            xr1 = barxl + share$loners*(barxr - barxl)
             xr2 = xr1 + share$crowd*(barxr - barxl)
             gcolors = list(
-                loner = 'red',
+                loners = 'red',
                 crowd = 'grey',
                 missing = 'black'
             )
             xl = list(
-                loner = barxl,
+                loners = barxl,
                 crowd = xr1,
                 missing = xr2
             )
             xr = list(
-                loner = xr1,
+                loners = xr1,
                 crowd = xr2,
                 missing = barxr
             )

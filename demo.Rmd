@@ -15,7 +15,7 @@ A shmistogram highlights point masses that may occur in a continuous variable, e
 - inconsistent rounding any continuous variable can introduce a mixture of point masses and relatively continuous observations
 - "age of earning first driver's license" plausibly has structural modes at the legal minimum (which may vary by state) and otherwise vary continuously
 
-Let's simulate a uniform distribution mixed with a two point masses and a couple missing observations:
+Let's simulate a uniform distribution mixed with two point masses and a couple missing observations:
 
 ```{r fig.width=9, fig.height=5}
 set.seed(1)

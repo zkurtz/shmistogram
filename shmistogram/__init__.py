@@ -4,6 +4,7 @@ import pandas as pd
 import pdb
 
 from . import agglomerate as agg
+from . import det
 
 class SeriesTable(object):
     def __init__(self, series, compute_empirical_p=False):
@@ -42,9 +43,8 @@ class SeriesTable(object):
             return {'missing': 0, 'df': self.df}
 
 class Shmistogram(object):
-    def __init__(self, x, loner_min_count=10, max_bins=None, prebin_maxbins=100):
+    def __init__(self, x, method='density_tree', loner_min_count=10, max_bins=None, prebin_maxbins=100):
         '''
-
         :param x: series-like object (pandas.Series, numpy 1-d array, flat list)
         :param max_bins: hard upper bound on the number of bins in the continuous component
         of the shmistogram
@@ -63,7 +63,10 @@ class Shmistogram(object):
         series_table = SeriesTable(x)
         self._tabulate_loners_and_the_crowd(series_table)
         self.n_loners = self.loners.n
-        self._agglomerate_crowd()
+        if method=='agglomerate':
+            self._agglomerate_crowd()
+        elif method=='density_tree':
+            self._density_tree()
 
     def _tabulate_loners_and_the_crowd(self, st):
         '''
@@ -134,6 +137,11 @@ class Shmistogram(object):
             fms = agg.forward_merge_score(bins)
             bins = agg.collapse_one(bins, np.argmax(fms))
         self.bins = bins
+
+    def _density_tree(self):
+        self.det = det.BinaryDensityEstimationTree()
+        self.det.fit(self.crowd.df)
+        self.bins = self.det.bins()
 
     def plot(self):
         # TODO

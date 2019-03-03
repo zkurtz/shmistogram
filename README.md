@@ -26,7 +26,7 @@ Examples
 
 ### Mixed data types
 
-A shmistogram highlights point masses that may occur in a continuous variable, explicitly decomposing the distribution into a mixture of a multinomial and a piecewise uniform distribution. Such point masses are quite common:
+A shmistogram emphasizes point masses that may occur in a continuous variable, explicitly decomposing the distribution into a mixture of a multinomial and a piecewise uniform distribution. Such point masses are quite common:
 
 -   inconsistent rounding any continuous variable can introduce a mixture of point masses and relatively continuous observations
 -   "age of earning first driver's license" plausibly has structural modes at the legal minimum (which may vary by state) and otherwise vary continuously
@@ -45,11 +45,13 @@ shmistogram::shmistogram(data)
 
 ![](demo/demo_files/figure-markdown_github/unnamed-chunk-1-1.png)
 
-The histogram obscures the point masses somewhat. By contrast, the shmistogram highlights the modes using red line segments, and also visualizes the fraction of the data that is missing.
+The histogram obscures the point masses somewhat. By contrast, the shmistogram uses red line segments to emphasize them. The legend bar at the top shows the relative portions of the data that compose the point masses (the "loners"), the relatively continous portion (the "crowd") and the missing values.
+
+A regularization term in the shmistogram binning algorithm (see [details](#Details)) limits the number of shmistogram bins, evidently giving it an advantage over default histogram binning when the target is a uniform density.
 
 ### Variable bin width
 
-The shmistogram's agglomerative binning produces a parsimonious density estimate with adaptive bin width:
+The shmistogram's adaptive bin width leads to a higher-fidelity representation of complicated distributions without substantially increasing the number of bins:
 
 ``` r
 set.seed(0)
@@ -58,27 +60,24 @@ data = c(
     rnorm(500, mean = 4, sd = 0.5)
 )
 par(mfrow = c(1, 2))
-hist(data, 50, border=NA, col='grey', main = 'Histogram')
+hist(data, border=NA, col='grey', main = 'Histogram')
 shmistogram::shmistogram(data)
 ```
 
 ![](demo/demo_files/figure-markdown_github/unnamed-chunk-2-1.png)
 
-## Future work
+## Details
 
-Our binning algorithm is based on several
-ad hoc heuristics. It is neither particularly
-scalable nor statistically efficient. In future
-work we'll likely replace this with 
-something like
+The default binning algorithm uses a [binary density estimation tree](shmistogram/det/__init__.py) to iteratively split the data into smaller bins. The split location (within a bin/leaf) maximizes the improvement in the deviance (i.e. in-sample negative log likelihood) subject to a minimum-points-per-leaf constraint. This minimum currently defaults to 3. 
+
+We choose the bin to split on as the bin for which splitting leads to the greatest improvement in deviance. Splits proceed as long as the deviance improvement exceeds the number of leaves. This approach is inspired by the Akaike information criterion (AIC), although this may be an abuse of the criterion in the sense that we're using it as part of a greedy iterative procedure instead of using it to compare fully-formed models. 
+
+For more about density estimation trees, see
 - [density estimation trees](https://mlpack.org/papers/det.pdf) 
 such as [this](https://gitlab.cern.ch/landerli/density-estimation-trees) or
 - [distribution element trees](https://arxiv.org/pdf/1610.00345.pdf) such as 
-[detpack](https://github.com/cran/detpack/blob/master/R/det1.R). Specifically, 
-calling `det1(x, mode=1)` on data x produces a variable bin-width histogram.
-
+[detpack](https://github.com/cran/detpack/blob/master/R/det1.R). Interestingly, calling `det1(x, mode=1)` on data x also produces a variable bin-width histogram.
 
 ## Disclaimer
 
-This repo is young, currently has no unit tests, and should be expected to change
-substantially. Use with caution.
+This repo is young, currently has no unit tests, and should be expected to change substantially. Use with caution.

@@ -5,6 +5,7 @@ import pdb
 
 from . import agglomerate as agg
 from . import det
+from .version import __version__
 
 class SeriesTable(object):
     def __init__(self, series, compute_empirical_p=False):

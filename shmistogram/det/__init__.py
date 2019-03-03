@@ -16,6 +16,7 @@ def search_split(df, lb=None, ub=None, min_data_in_leaf=None):
     :return: {'idx': idx, 'threshold': t, 'divergence_improvement': ??}
     '''
     n = df.shape[0]
+    assert n > 1
     n_ob = df.n_obs.sum()
     xmin = df.value.iloc[0]
     xmax = df.value.iloc[-1]
@@ -47,7 +48,7 @@ def search_split(df, lb=None, ub=None, min_data_in_leaf=None):
         assert m >= 1
         df = df[df.left_n >= m]
         df = df[df.right_n >= m]
-        if df.shape[0] == 0:
+        if df.shape[0] < 2:
             return {
                 'deviance_improvement': -1,
                 'idx': None, 'value': None, 'n': n_ob
@@ -65,7 +66,7 @@ def search_split(df, lb=None, ub=None, min_data_in_leaf=None):
     #   (null) for a particular split, then the split is worthwhile
     df['neg_ll'] = df.left_neg_ll + df.right_neg_ll
     # null negative log likelihood
-    nnll = -n*np.log(null_dens)
+    nnll = -n_ob*np.log(null_dens)
     assert nnll >= df.neg_ll.max() - 1e-12
     idx = df.neg_ll.iloc[:(df.shape[0]-1)].idxmin()
     value = (df.value.loc[idx] + df.value.loc[idx + 1])/2
@@ -73,7 +74,10 @@ def search_split(df, lb=None, ub=None, min_data_in_leaf=None):
     di = nnll - bestll
     assert di > - np.inf
     assert di < np.inf
-    return {'deviance_improvement': di, 'idx': idx, 'value': value, 'n': n_ob}
+    return {
+        'deviance_improvement': di,
+        'idx': np.int(idx+1), # plus 1 because we want df.iloc[:idx] to include the original idx (to create the left leaf)
+        'value': value, 'n': n_ob}
 
 class Node(object):
     def __init__(self, lb, ub):
@@ -84,6 +88,8 @@ class Node(object):
         '''
         self.lb = lb
         self.ub = ub
+        assert isinstance(lb['idx'], int)
+        assert isinstance(ub['idx'], int)
         # Children
         self.left = None
         self.right = None
@@ -113,23 +119,33 @@ class BinaryDensityEstimationTree(object):
         self.N = self.df.n_obs.sum()
 
     def _plant_the_tree(self):
-        self.root = Node(
-            lb={'idx': 0, 'value': self.df.value.iloc[0]},
-            ub={'idx': self.df.shape[0], 'value': self.df.value.iloc[-1]}
-        )
+        try:
+            self.root = Node(
+                lb={'idx': np.int(0), 'value': self.df.value.iloc[0]},
+                ub={'idx': np.int(self.df.shape[0]), 'value': self.df.value.iloc[-1]}
+            )
+        except:
+            pdb.set_trace()
         self.last_node_idx = 0
         self.nodes = {self.last_node_idx: self.root}
-        mdil=self.params['min_data_in_leaf']
-        splt = search_split(self.df, min_data_in_leaf=mdil)
+        mdil = self.params['min_data_in_leaf']
+        splt = search_split(self.df.copy(), min_data_in_leaf=mdil)
         self.leaves = pd.DataFrame(splt, index=[0])
 
     def _continue_splitting(self):
         self.leaves.sort_values('deviance_improvement', inplace=True)
-        best = self.leaves.iloc[-1]
-        self.threshold = best[['idx', 'value']].to_dict()
-        self.threshold['idx'] = int(self.threshold['idx']) + 1 #TODO -- unclear how this becomes a float
-        self.best_node = self.leaves.index.values[-1]
-        return best.deviance_improvement > (self.last_node_idx/2) + 1
+        di = self.leaves.deviance_improvement.iloc[-1]
+        idx = self.leaves.idx.iloc[-1]
+        val = self.leaves.value.iloc[-1]
+        # The number of leaf nodes is the number of distinct fitted
+        #   density values, essentially the k (# of parameters) in the information criterion:
+        pseudo_akaike_k = self.leaves.shape[0]
+        assert (self.last_node_idx/2) + 1 == pseudo_akaike_k # sanity check
+        if di > pseudo_akaike_k:
+            self.threshold = {'idx': np.int(idx), 'value': val}
+            self.best_node = self.leaves.index.values[-1]
+            return True
+        return False
 
     def _search_split(self, node):
         mdil = self.params['min_data_in_leaf']
@@ -142,7 +158,10 @@ class BinaryDensityEstimationTree(object):
     def _grow_the_tree(self):
         while self._continue_splitting():
             node = self.nodes[self.best_node]
-            node.split(self.threshold)
+            try:
+                node.split(self.threshold)
+            except:
+                pdb.set_trace()
             nl = node.left
             nr = node.right
             i = self.last_node_idx
@@ -161,6 +180,8 @@ class BinaryDensityEstimationTree(object):
             self.last_node_idx += 2
 
     def fit(self, df):
+        if df.shape[0] == 0:
+            return None
         self._accept_data(df)
         self._plant_the_tree()
         self._grow_the_tree()

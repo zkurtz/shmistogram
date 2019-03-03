@@ -1,3 +1,9 @@
+default_plotting_params = function(){
+    return(list(
+        xlab='values'
+    ))
+}
+
 SegmentShmistogram = R6::R6Class(
     "SegmentShmistogram",
     public = list(
@@ -5,9 +11,16 @@ SegmentShmistogram = R6::R6Class(
         DT = NULL,
         share = NULL,
         n_data_types = NULL,
-        initialize = function(data){
-            shm = pyshmistogram$Shmistogram(data)
+        initialize = function(data, params=NULL){
+            self$validate_binning_params(params$binning_params)
+            shm = do.call(pyshmistogram$Shmistogram, c(list(x=data), params))
             self$unpack_data(shm)
+        },
+        validate_binning_params = function(params){
+            bp = params$binning_params #possibly NULL, no prob
+            if(!is.null(bp$min_data_in_leaf)){
+                stopifnot(is.integer(bp$min_data_in_leaf))
+            }
         },
         unpack_data = function(shm){
             crowd = shm$bins
@@ -33,7 +46,15 @@ SegmentShmistogram = R6::R6Class(
             self$n_data_types = sum(self$share > 0)
         },
         plot = function(legend=TRUE, loner_axis=TRUE, ...){
+            args = list(...)
+            pp = default_plotting_params()
+            for(key in intersect(names(args), names(pp))){
+                pp[[key]] = args[[key]]
+                args[[key]] = NULL
+            }
             DT = data.table::data.table(self$data$crowd)
+            LT = reticulate::py_to_r(self$data$loners)
+            LT$value = as.numeric(row.names(LT))
             N = nrow(DT)
             if(N == 0){
                 print("This data is 100% loners!")
@@ -41,8 +62,8 @@ SegmentShmistogram = R6::R6Class(
                 return()
             }
             if(self$n_data_types < 2) legend=FALSE
-            xmin = DT$lb[1]
-            xmax = DT$ub[N]
+            xmin = min(DT$lb[1], LT$value[1], na.rm=TRUE)
+            xmax = max(DT$ub[N], LT$value[nrow(LT)], na.rm=TRUE)
             max_rate = max(DT$rate)
             ymax=max_rate
             if(legend){  # leave space for legend bar
@@ -51,11 +72,14 @@ SegmentShmistogram = R6::R6Class(
             N_loners = length(self$data$loners$n_obs)
             if(N_loners==0) loner_axis=FALSE
             if(loner_axis) par(mar=c(5, 4, 4, 4) + 0.3)
-            plot(x=c(xmin, xmax), y=c(0, ymax),
+            do.call(plot, c(list(
+                x=c(xmin, xmax), 
+                y=c(0, ymax),
                 type='n', bty='n',
-                xlab='values', ylab='crowd frequency rate',
-                main='Shmistogram',
-                ...
+                xlab=pp$xlab, 
+                ylab='crowd frequency rate',
+                main='Shmistogram'),
+                args)
             )
             if(legend) self$add_legend_bar(max_rate, xmin, xmax)
             # Plot crowd
@@ -149,137 +173,17 @@ SegmentShmistogram = R6::R6Class(
 #' Plot a shmistogram
 #' 
 #' @param data A numeric vector. May contain NA
-#' @param ... Args to be passed to graphics::plot
-shmistogram = function(data, ...){ #kind='segment',
-    # if(kind=='segment'){
-    #     rshm = SegmentShmistogram$new(data)
-    # }else if(kind=='block'){
-    #     rshm = BlockShmistogram$new(data)
-    # }else{
-    #     stop(paste0("kind = ", kind, " not recognized"))
-    # }
-    rshm = SegmentShmistogram$new(data)
-    rshm$plot(...)
+#' @param shmistogram_params List of parameters to pass to the shmistogram
+#' constructor
+#' @param plotting_params List of parameters passed to the plot call
+#' @param return_data (boolean) If TRUE, return the shmistogram data
+#' in addition to building the plot
+shmistogram = function(data, 
+        shmistogram_params=NULL, 
+        plotting_params=list(),
+        return_data=FALSE
+    ){
+    rshm = SegmentShmistogram$new(data, params=shmistogram_params)
+    do.call(rshm$plot, plotting_params)
+    if(return_data) return(rshm)
 }
-
-
-# # Failed concept:
-# BlockShmistogram = R6::R6Class(
-#     "BlockShmistogram",
-#     public = list(
-#         data = NULL,
-#         DT = NULL,
-#         crooked_root_c = NULL,
-#         initialize = function(data){
-#             #stopifnot("shmistogram.Shmistogram" %in% class(shm))
-#             shm = pyshmistogram$Shmistogram(data)
-#             self$unpack_data(shm)
-#             if((self$data$n$loners > 0) & (self$data$n$crowd > 0)){
-#                 self$blend()
-#             }else if(self$data$n$loners > 0){
-#                 self$stats_loners()
-#             }else{
-#                 self$stats_crowd()
-#             }
-#         },
-#         unpack_data = function(shm){
-#             crowd = shm$bins
-#             loners_data = shm$loners$df2R()
-#             loners = loners_data$df # reticulate::py_to_r()
-#             n = list(
-#                 loners = sum(loners$n_obs),
-#                 crowd = sum(crowd$freq),
-#                 na = loners_data$missing
-#             )
-#             n$n = n$loners + n$crowd
-#             self$data = list(
-#                 n = n,
-#                 crowd = crowd,
-#                 loners = loners
-#             )
-#         },
-#         stats_loners = function(){
-#             stop("TODO")
-#         },
-#         stats_crowd = function(){
-#             stop("TODO")
-#         },
-#         insert_loner = function(k){
-#             value = self$data$loners$index$values[k]
-#             n_obs = as.numeric(self$data$loners$n_obs)[k]
-#             idx=self$DT[J(value), on='lb', roll=TRUE, which=TRUE]
-#             # rectangular roots:
-#             # 1. x1*x2 = value
-#             # 2. x1/x2 = C
-#             #   -> x1 = Cx2
-#             #   -> x2*x2 = value/C
-#             #   -> x2 = sqrt(value/C)
-#             width = sqrt(n_obs/self$crooked_root_c)
-#             depth = self$crooked_root_c*width
-#             newbin = data.table::data.table(
-#                 freq=n_obs,
-#                 lb=value,
-#                 ub=value,
-#                 width=width,
-#                 rate=depth,
-#                 kind='loner')
-#             setattr(self$DT, "sorted", "lb")
-#             if(is.na(idx)){ # then value < DT$lb[1]
-#                 newbin$pos = self$DT$pos[1] - width
-#                 self$DT = rbind(newbin, self$DT)
-#                 self$DT$pos = self$DT$pos + width
-#             }else if(value > last(self$DT$ub)){
-#                 newbin$pos = last(self$DT$pos) + last(self$DT$width)
-#                 self$DT = rbind(self$DT, newbin)
-#             }else{
-#                 DT1 = self$DT[1:idx,]
-#                 w1 = value - DT1$lb[idx]
-#                 DT1$ub[idx] = DT1$lb[idx] + w1
-#                 DT1$freq[idx] = (w1/DT1$width[idx])*DT1$freq[idx]
-#                 DT1$width[idx] = w1
-#                 newbin$pos=last(DT1$pos) + w1
-#                 DT2 = self$DT[idx:nrow(self$DT),]
-#                 DT2$lb[1] = DT1$ub[idx]
-#                 w2 = DT2$ub[1] - value
-#                 DT2$freq[1] = (w2/DT2$width[1])*DT2$freq[1]
-#                 DT2$width[1] = w2
-#                 DT2$pos = DT2$pos + newbin$width
-#                 DT2$pos[1] = DT2$pos[1] + w1
-#                 self$DT = rbind(DT1, newbin, DT2)
-#             }
-#         },
-#         blend = function(){
-#             self$DT = data.table::data.table(self$data$crowd)
-#             self$DT$kind = 'crowd'
-#             self$DT$pos = self$DT$lb - self$DT$lb[1]
-#             ratios = self$DT$rate/self$DT$width
-#             self$crooked_root_c = median(ratios)
-#             for(k in 1:length(self$data$loners$n_obs)){
-#                 self$insert_loner(k)
-#             }
-#         },
-#         plot = function(){
-#             DT = data.table::copy(self$DT)
-#             N = nrow(DT)
-#             color_lookup = list(
-#                 crowd='grey',
-#                 loner='pink'
-#             )
-#             plot(
-#                 x=c(DT$pos[1], DT$pos[N] + DT$width[N]),
-#                 y=c(0, max(DT$rate))*1.1,
-#                 type='n', bty='n',
-#                 xlab='Values', ylab='Frequency rate'
-#             )
-#             for(k in 1:N){
-#                 rect(
-#                     DT$pos[k], 0,
-#                     DT$pos[k] + DT$width[k], DT$rate[k],
-#                     col = color_lookup[[DT$kind[k]]]
-#                     #, border=NA
-#                 )
-#             }
-# 
-#         }
-#     )
-# )

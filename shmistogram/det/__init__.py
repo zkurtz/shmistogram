@@ -2,6 +2,16 @@ import numpy as np
 import pandas as pd
 import pdb
 
+def default_params():
+    '''
+    :param max_bins: hard upper bound on the number of bins in the continuous component
+        of the shmistogram
+    '''
+    return {
+        'max_bins': np.inf,
+        'min_data_in_leaf': 3
+    }
+
 def isclose(a, b, rel_tol=1e-12, abs_tol=0.0):
     return abs(a-b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
 
@@ -101,11 +111,6 @@ class Node(object):
         self.left = Node(lb = self.lb, ub = threshold)
         self.right = Node(lb = threshold, ub = self.ub)
 
-def default_params():
-    return {
-        'min_data_in_leaf': 3
-    }
-
 class BinaryDensityEstimationTree(object):
     def __init__(self, params=None):
         self.params = default_params()
@@ -116,7 +121,6 @@ class BinaryDensityEstimationTree(object):
         self.df = df.copy()
         self.df['value'] = self.df.index.values
         self.df.index = range(df.shape[0])
-        self.N = self.df.n_obs.sum()
 
     def _plant_the_tree(self):
         try:
@@ -133,6 +137,8 @@ class BinaryDensityEstimationTree(object):
         self.leaves = pd.DataFrame(splt, index=[0])
 
     def _continue_splitting(self):
+        if self.leaves.shape[0] >= self.params['max_bins']:
+            return False
         self.leaves.sort_values('deviance_improvement', inplace=True)
         di = self.leaves.deviance_improvement.iloc[-1]
         idx = self.leaves.idx.iloc[-1]
@@ -180,14 +186,18 @@ class BinaryDensityEstimationTree(object):
             self.last_node_idx += 2
 
     def fit(self, df):
-        if df.shape[0] == 0:
-            return None
-        self._accept_data(df)
-        self._plant_the_tree()
-        self._grow_the_tree()
+        self.N = df.n_obs.sum()
+        if self.N > 0:
+            self._accept_data(df)
+            self._plant_the_tree()
+            self._grow_the_tree()
 
     def bins(self):
         ''' Identify all leaf bins in ascending order '''
+        if self.N == 0:
+            return pd.DataFrame({
+                'lb': [], 'ub': [], 'freq': [], 'width': [], 'rate': []
+            })
         lnodes = self.leaves.index.values
         df = pd.DataFrame({
             'lb': [self.nodes[k].lb['value'] for k in lnodes],

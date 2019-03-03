@@ -2,6 +2,18 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 
+def default_params():
+    '''
+    :param max_bins: hard upper bound on the number of bins in the continuous component
+        of the shmistogram
+    :param prebin_maxbins: (int) pre-bin the points as you would in a standard
+        histogram with at most `prebin_maxbins` bins to limit the computational cost
+    '''
+    return {
+        'max_bins': None,
+        'prebin_maxbins': 100
+    }
+
 def rate_similarity(n1, w1, n2, w2):
     ''' Estimate the statistical significance of the difference between
     two rates; return a p-value adjusted for small sample size.

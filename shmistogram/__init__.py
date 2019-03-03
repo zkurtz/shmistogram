@@ -7,6 +7,15 @@ from . import agglomerate as agg
 from . import det
 from .version import __version__
 
+def foo(x, some_args=None):
+    x+=1
+    outstr = ''
+    if some_args is not None:
+        assert isinstance(some_args, dict)
+        for a in some_args:
+            outstr += a
+    return outstr
+
 class SeriesTable(object):
     def __init__(self, series, compute_empirical_p=False):
         self.n = len(series)
@@ -44,19 +53,19 @@ class SeriesTable(object):
             return {'missing': 0, 'df': self.df}
 
 class Shmistogram(object):
-    def __init__(self, x, method='density_tree', loner_min_count=10, max_bins=None, prebin_maxbins=100):
+    def __init__(self, x,
+            binning_method='density_tree',
+            loner_min_count=10,
+            binning_params=None
+        ):
         '''
         :param x: series-like object (pandas.Series, numpy 1-d array, flat list)
-        :param max_bins: hard upper bound on the number of bins in the continuous component
-        of the shmistogram
         :param loner_min_count: Observations with a frequency of at least `loner_min_count` are
         eligible to be considered 'loners'
-        :param prebin_maxbins: (int) pre-bin the points as you would in a standard
-        histogram with at most `prebin_maxbins` bins to limit the computational cost
+        :param binning_params: (dictionary) passed to the binning method
         '''
+        print(binning_params)
         self.n_obs = len(x)
-        self.max_bins = max_bins
-        self.prebin_maxbins = prebin_maxbins
         self.loner_min_count = loner_min_count
         if not isinstance(x, pd.Series):
             assert isinstance(x, np.ndarray) or isinstance(x, list)
@@ -64,10 +73,12 @@ class Shmistogram(object):
         series_table = SeriesTable(x)
         self._tabulate_loners_and_the_crowd(series_table)
         self.n_loners = self.loners.n
-        if method=='agglomerate':
-            self._agglomerate_crowd()
-        elif method=='density_tree':
-            self._density_tree()
+        if binning_method=='agglomerate':
+            self._agglomerate_crowd(binning_params)
+        elif binning_method=='density_tree':
+            self._density_tree(binning_params)
+        else:
+            raise Exception("binning_method not recognized")
 
     def _tabulate_loners_and_the_crowd(self, st):
         '''
@@ -86,8 +97,6 @@ class Shmistogram(object):
             is_loner = np.array([True]*tn)
         which_loners = idx[is_loner].tolist()
         which_crowd = idx[~is_loner].tolist()
-        if self.max_bins is None:
-            self.max_bins = round(np.log(len(which_crowd)+1) ** 1.5)
         self.loners = st.select(which_loners)
         self.crowd = st.select(which_crowd)
         assert self.loners.df.n_obs.sum() + self.crowd.df.n_obs.sum() == st.df.n_obs.sum()
@@ -131,16 +140,21 @@ class Shmistogram(object):
         bins['rate'] =  bins.freq/bins.width
         return bins
 
-    def _agglomerate_crowd(self):
+    def _agglomerate_crowd(self, binning_params):
+        self.binning_params = agg.default_params()
+        if binning_params is not None:
+            self.binning_params.update(binning_params)
         bins = self._bins_init()
-        assert self.max_bins is not None
-        while bins.shape[0] > self.max_bins:
+        if self.binning_params['max_bins'] is None:
+            n_crowd = len(self.crowd.df.shape[0])
+            self.binning_params['max_bins'] = round(np.log(n_crowd+1) ** 1.5)
+        while bins.shape[0] > self.binning_params['max_bins']:
             fms = agg.forward_merge_score(bins)
             bins = agg.collapse_one(bins, np.argmax(fms))
         self.bins = bins
 
-    def _density_tree(self):
-        self.det = det.BinaryDensityEstimationTree()
+    def _density_tree(self, binning_params):
+        self.det = det.BinaryDensityEstimationTree(binning_params)
         self.det.fit(self.crowd.df)
         self.bins = self.det.bins()
 

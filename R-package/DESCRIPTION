@@ -17,3 +17,4 @@ Imports:
     data.table,
     reticulate,
     R6
+Suggests: testthat

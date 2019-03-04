@@ -1,0 +1,14 @@
+matrix:
+  include:
+    - language: python
+      python: 3.6
+      python: 3.7
+      script:
+        - pytest
+
+    - language: R
+      R: 3.5.2
+      before_script:
+        - cd R-package
+      script:
+        - Rscript .r_tests.R

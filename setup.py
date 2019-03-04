@@ -6,5 +6,8 @@ setup(
     name='shmistogram',
     version=__version__,
     packages=['shmistogram'],
+    install_requires=[
+        'pandas',
+    ],
     license='See LICENSE.txt',
 )

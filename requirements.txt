@@ -3,5 +3,4 @@ pandas==0.24.1
 python-dateutil==2.8.0
 pytz==2018.9
 scipy==1.2.1
--e git+git@github.com:zkurtz/shmistogram.git@6110caaadc8c4831a392d3c438879c754e71809f#egg=shmistogram
 six==1.12.0

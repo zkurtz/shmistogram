@@ -36,7 +36,7 @@ Let's simulate a uniform distribution mixed with two point masses and a couple m
 ``` r
 set.seed(1)
 unif = runif(n=100, min=-10, max=100)
-multi = c(rep(0, 20), rep(42, 10), rep(NA, 2))
+multi = c(rep(0, 20), rep(42, 10), rep(NA, 10))
 data = c(unif, multi)
 par(mfrow = c(1, 2))
 hist(data, border=NA, col='grey', main = 'Histogram')

@@ -8,6 +8,7 @@ setup(
     packages=['shmistogram'],
     install_requires=[
         'pandas',
+        'scipy'
     ],
     license='See LICENSE.txt',
 )

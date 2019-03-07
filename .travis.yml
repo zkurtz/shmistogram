@@ -2,12 +2,13 @@ matrix:
   include:
     - language: python
       python: 3.6
+      before_install: pip install pandas
       install: python setup.py develop
       script: pytest
 
-    - language: R
-      R: 3.5.2
-      before_install:
-	- python setup.py develop
-        - cd R-package
-      script: Rscript -e 'library(devtools); devtools::test()'
+#    - language: R
+#      R: 3.5.2
+#      before_install:
+#	- python setup.py develop
+#        - cd R-package
+#      script: Rscript -e 'library(devtools); devtools::test()'

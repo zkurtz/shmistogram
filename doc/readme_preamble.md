@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/zkurtz/shmistogram.svg?branch=master)](https://travis-ci.org/zkurtz/shmistogram)
 # shmistogram
 
 The shmistogram is a better histogram. Key differences include
@@ -6,17 +7,22 @@ The shmistogram is a better histogram. Key differences include
 by hierarchically grouping points into variable-width bins
 - emphasizing singular modalities (i.e. point masses) with a separate multinomial distribution
 
-Functionality is currently split across two packages. The python shmistogram module
-currently performs all binning and tabulation computations. The R package
-uses reticulate to access the python module as a back-end and offers a plotting function.
+Functionality is split across two packages. The python shmistogram module performs all binning and 
+tabulation computations. The R package offers plotting functionality while using reticulate to access the python back-end.
 
 ## Installation
 
-Requirements: R 3.5.2+ and python 3.6+
+Python backend (everything except graphics):
+- install python 3.6+
+- `pip install git+https://github.com/zkurtz/shmistogram.git#egg=shmistogram`
+- test your installation by running [demo.py](demo/demo.py)
 
-Clone this repo and do `python setup.py install` to install the python module. Test your installation
-by running [demo.py](demo/demo.py).
-
-Install the R package from github as 
-`devtools::install_github("zkurtz/shmistogram/R-package")`. Test your installation by compiling
-[demo.Rmd](demo/demo.Rmd).
+R graphics front end:
+- install R 3.5.2+
+- then do
+    ```
+    install.packages("devtools")
+    library(devtools)
+    devtools::install_github("zkurtz/shmistogram/R-package")
+    ```
+- Test your installation by compiling [demo.Rmd](demo/demo.Rmd).

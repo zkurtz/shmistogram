@@ -55,7 +55,7 @@ class SeriesTable(object):
 class Shmistogram(object):
     def __init__(self, x,
             binning_method='density_tree',
-            loner_min_count=10,
+            loner_min_count=None,
             binning_params=None
         ):
         '''
@@ -64,9 +64,8 @@ class Shmistogram(object):
         eligible to be considered 'loners'
         :param binning_params: (dictionary) passed to the binning method
         '''
-        print(binning_params)
         self.n_obs = len(x)
-        self.loner_min_count = loner_min_count
+        self._set_loner_min_count()
         if not isinstance(x, pd.Series):
             assert isinstance(x, np.ndarray) or isinstance(x, list)
             x = pd.Series(x)
@@ -79,6 +78,12 @@ class Shmistogram(object):
             self._density_tree(binning_params)
         else:
             raise Exception("binning_method not recognized")
+
+    def _set_loner_min_count(self):
+        if loner_min_count is None:
+            self.loner_min_count = np.ceil(np.log(self.n_obs)**1.3)
+        else:
+            self.loner_min_count = loner_min_count
 
     def _tabulate_loners_and_the_crowd(self, st):
         '''

@@ -88,7 +88,7 @@ it as part of a greedy iterative procedure instead of using it to compare fully-
 
 The variable-width binning algorithms of 
 [bayesian block representations](https://arxiv.org/pdf/1207.5578.pdf) 
-deserve consideration [TODO] as drop-in relpacements for 
+deserve consideration [TODO] as drop-in replacements for 
 our density tree binning algorithm. 
 [Python Perambulations](https://jakevdp.github.io/blog/2012/09/12/dynamic-programming-in-python/) 
 presents the concept well.

@@ -7,8 +7,10 @@ setup(
     version=__version__,
     packages=['shmistogram', 'shmistogram.det'],
     install_requires=[
+        'astropy',
+        'matplotlib',
         'pandas',
-        'scipy'
+        'scipy',
     ],
     license='See LICENSE.txt',
 )

@@ -5,16 +5,9 @@ import pdb
 
 from . import agglomerate as agg
 from . import det
+from . import simulations
+from . import plot
 from .version import __version__
-
-def foo(x, some_args=None):
-    x+=1
-    outstr = ''
-    if some_args is not None:
-        assert isinstance(some_args, dict)
-        for a in some_args:
-            outstr += a
-    return outstr
 
 class SeriesTable(object):
     def __init__(self, series, compute_empirical_p=False):

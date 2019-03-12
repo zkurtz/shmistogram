@@ -6,3 +6,4 @@
 deprecated*
 *.pdf
 *venv
+*.ipynb_checkpoints

@@ -89,9 +89,9 @@ it as part of a greedy iterative procedure instead of using it to compare fully-
 The variable-width binning algorithms of 
 [bayesian block representations](https://arxiv.org/pdf/1207.5578.pdf) 
 deserve consideration [TODO] as drop-in replacements for 
-our density tree binning algorithm. 
+our density tree binning algorithm. See our [demo](demo/bayesian_blocks.ipynb) for working code, or  
 [Python Perambulations](https://jakevdp.github.io/blog/2012/09/12/dynamic-programming-in-python/) 
-presents the concept well.
+for light conceptual introduction.
 
 Statistical efficiency considerations receive thorough treatment in
 [Efficient Density Estimation via Piecewise Polynomial 

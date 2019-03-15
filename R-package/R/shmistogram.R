@@ -1,9 +1,15 @@
 default_plotting_params = function(){
     return(list(
-        xlab='values'
+        xlab='values',
+        ylab='crowd frequency rate',
+        main='Shmistogram'
     ))
 }
 
+#' A class of methods for generating a shmistogram
+#' 
+#' @details "Segment" refers to the line segements used to represent
+#' the multinomial component of the underlying density model
 SegmentShmistogram = R6::R6Class(
     "SegmentShmistogram",
     public = list(
@@ -11,13 +17,13 @@ SegmentShmistogram = R6::R6Class(
         DT = NULL,
         share = NULL,
         n_data_types = NULL,
-        initialize = function(data, params=NULL){
+        initialize = function(data, params=list()){
             self$validate_binning_params(params$binning_params)
             shm = do.call(pyshmistogram$Shmistogram, c(list(x=data), params))
             self$unpack_data(shm)
         },
         validate_binning_params = function(params){
-            bp = params$binning_params #possibly NULL, no prob
+            bp = params$binning_params #possibly NULL, no problem
             if(!is.null(bp$min_data_in_leaf)){
                 stopifnot(is.integer(bp$min_data_in_leaf))
             }
@@ -77,8 +83,8 @@ SegmentShmistogram = R6::R6Class(
                 y=c(0, ymax),
                 type='n', bty='n',
                 xlab=pp$xlab, 
-                ylab='crowd frequency rate',
-                main='Shmistogram'),
+                ylab=pp$ylab,
+                main=pp$main),
                 args)
             )
             if(legend) self$add_legend_bar(max_rate, xmin, xmax)
@@ -173,17 +179,20 @@ SegmentShmistogram = R6::R6Class(
 #' Plot a shmistogram
 #' 
 #' @param data A numeric vector. May contain NA
-#' @param shmistogram_params List of parameters to pass to the shmistogram
+#' @param params List of parameters to pass to the shmistogram
 #' constructor
 #' @param plotting_params List of parameters passed to the plot call
 #' @param return_data (boolean) If TRUE, return the shmistogram data
 #' in addition to building the plot
+#' 
+#' @export
+#' 
 shmistogram = function(data, 
-        shmistogram_params=NULL, 
+        params=list(), 
         plotting_params=list(),
         return_data=FALSE
     ){
-    rshm = SegmentShmistogram$new(data, params=shmistogram_params)
+    rshm = SegmentShmistogram$new(data, params=params)
     do.call(rshm$plot, plotting_params)
     if(return_data) return(rshm)
 }

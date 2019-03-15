@@ -18,3 +18,4 @@ Imports:
     reticulate,
     R6
 Suggests: testthat
+RoxygenNote: 6.1.0

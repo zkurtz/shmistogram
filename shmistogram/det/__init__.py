@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 import pdb
 
+from ..utils import ClassUtils
+
 def default_params():
     '''
     :param max_bins: hard upper bound on the number of bins in the continuous component
@@ -9,7 +11,9 @@ def default_params():
     '''
     return {
         'max_bins': np.inf,
-        'min_data_in_leaf': 3
+        'min_data_in_leaf': 3,
+        'lambda': 1,
+        'verbose': False
     }
 
 def isclose(a, b, rel_tol=1e-12, abs_tol=0.0):
@@ -111,11 +115,12 @@ class Node(object):
         self.left = Node(lb = self.lb, ub = threshold)
         self.right = Node(lb = threshold, ub = self.ub)
 
-class BinaryDensityEstimationTree(object):
+class BinaryDensityEstimationTree(ClassUtils):
     def __init__(self, params=None):
         self.params = default_params()
         if params is not None:
             self.params.update(params)
+        self.verbose = self.params.pop('verbose')
 
     def _accept_data(self, df):
         self.df = df.copy()
@@ -138,6 +143,7 @@ class BinaryDensityEstimationTree(object):
 
     def _continue_splitting(self):
         if self.leaves.shape[0] >= self.params['max_bins']:
+            self.vp("stopped splitting because max_bins")
             return False
         self.leaves.sort_values('deviance_improvement', inplace=True)
         di = self.leaves.deviance_improvement.iloc[-1]
@@ -147,10 +153,11 @@ class BinaryDensityEstimationTree(object):
         #   density values, essentially the k (# of parameters) in the information criterion:
         pseudo_akaike_k = self.leaves.shape[0]
         assert (self.last_node_idx/2) + 1 == pseudo_akaike_k # sanity check
-        if di > pseudo_akaike_k:
+        if di > self.params['lambda'] * pseudo_akaike_k:
             self.threshold = {'idx': np.int(idx), 'value': val}
             self.best_node = self.leaves.index.values[-1]
             return True
+        self.vp("stopped splitting because lambda, information criterion")
         return False
 
     def _search_split(self, node):

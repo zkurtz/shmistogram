@@ -5,7 +5,11 @@ exec(open("shmistogram/version.py").read())
 setup(
     name='shmistogram',
     version=__version__,
-    packages=['shmistogram', 'shmistogram.det'],
+    packages=[
+        'shmistogram',
+        'shmistogram.det',
+        'shmistogram.plot'
+    ],
     install_requires=[
         'astropy',
         'matplotlib',

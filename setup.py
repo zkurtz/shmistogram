@@ -8,7 +8,8 @@ setup(
     packages=[
         'shmistogram',
         'shmistogram.det',
-        'shmistogram.plot'
+        'shmistogram.plot',
+        'shmistogram.simulations'
     ],
     install_requires=[
         'astropy',

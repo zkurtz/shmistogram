@@ -1,5 +1,4 @@
 from astropy import stats
-from copy import deepcopy
 import numpy as np
 import pandas as pd
 import pdb
@@ -7,48 +6,14 @@ import pdb
 from . import agglomerate as agg
 from . import det
 from .utils import ClassUtils
-
-class SeriesTable(object):
-    def __init__(self, series, compute_empirical_p=False):
-        self.n = len(series)
-        if series.name is None:
-            self.name = 0
-        else:
-            self.name = series.name
-        vc = series.value_counts(sort=False, dropna=False)
-        self.df = pd.DataFrame(vc).sort_index()
-        self.df.rename(columns={self.name: 'n_obs'}, inplace=True)
-        if compute_empirical_p:
-            self.df['empirical_p'] = self.df.n_obs/len(series)
-        self.compute_empirical_p = compute_empirical_p
-        assert self.df[~np.isnan(self.df.index)].index.is_monotonic
-
-    def select(self, idxs):
-        ''' Return a copy of self that includes only a subset of the values '''
-        st = deepcopy(self)
-        st.df = self.df.loc[idxs]
-        st.n = st.df.n_obs.sum()
-        if self.compute_empirical_p:
-            st.df['empirical_p'] /= st.df['empirical_p'].sum()
-        return st
-
-    def df2R(self):
-        ''' Return a dict that separates the np.nan count from all other counts,
-        since conversion of pandas df to R data.frame fails on an np.nan index
-        '''
-        if np.nan in self.df.index:
-            return {
-                'missing': self.df.loc[np.nan].n_obs,
-                'df': self.df[~np.isnan(self.df.index)]
-            }
-        else:
-            return {'missing': 0, 'df': self.df}
+from .tabulation import SeriesTable
 
 class Shmistogram(ClassUtils):
     def __init__(self, x,
             binning_method='density_tree',
             loner_min_count=None,
-            binning_params=None
+            binning_params=None,
+            verbose=False
         ):
         '''
         :param x: series-like object (pandas.Series, numpy 1-d array, flat list)
@@ -56,16 +21,21 @@ class Shmistogram(ClassUtils):
         eligible to be considered 'loners'
         :param binning_params: (dictionary) passed to the binning method
         '''
+        self.verbose = verbose
         self.n_obs = len(x)
         self._set_loner_min_count(loner_min_count)
-        if not isinstance(x, pd.Series):
-            assert isinstance(x, np.ndarray) or isinstance(x, list)
-            x = pd.Series(x)
+
+        # Tabulation
+        t0 = self.timer()
         series_table = SeriesTable(x)
         self._tabulate_loners_and_the_crowd(series_table)
         self.n_loners = self.loners.n
+        self.timer(t0, task='tabulation')
+
+        # Binning
+        t0 = self.timer()
         if binning_method=='agglomerate':
-            print("WARNING: agglomerate is our deprecated")
+            print("WARNING: agglomerate is deprecated")
             self._agglomerate_crowd(binning_params)
         elif binning_method=='density_tree':
             self._density_tree(binning_params)
@@ -73,6 +43,7 @@ class Shmistogram(ClassUtils):
             self._bayesian_blocks(binning_params)
         else:
             raise Exception("binning_method not recognized")
+        self.timer(t0, task='binning')
 
     def _set_loner_min_count(self, loner_min_count):
         if loner_min_count is None:

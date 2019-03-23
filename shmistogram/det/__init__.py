@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import warnings
 import pdb
 
 from ..utils import ClassUtils
@@ -10,16 +11,35 @@ def default_params():
         of the shmistogram
     '''
     return {
+        'n_bins': None,
         'max_bins': np.inf,
-        'min_data_in_leaf': 3,
+        'min_data_in_leaf': int(3),
         'lambda': 1,
         'verbose': False
     }
 
+def accept_params(params):
+    p = default_params()
+    if params is None:
+        return p
+    p.update(params)
+    if (p['n_bins'] is not None) and (p['max_bins'] is not None):
+        try:
+            assert not (p['max_bins'] < p['n_bins'])
+        except:
+            raise Exception("You must not specify max_bins less than n_bins")
+    if p['min_data_in_leaf'] is not None:
+        try:
+            assert isinstance(p['min_data_in_leaf'], int)
+            assert p['min_data_in_leaf'] > 0
+        except:
+            raise Exception("min_data_in_leaf must be an integer > 0 or None")
+    return p
+
 def isclose(a, b, rel_tol=1e-12, abs_tol=0.0):
     return abs(a-b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
 
-def search_split(df, lb=None, ub=None, min_data_in_leaf=None):
+def _search_split(df, lb=None, ub=None, min_data_in_leaf=None):
     '''
     Search for an optimal split (index and threshold value)
 
@@ -58,15 +78,17 @@ def search_split(df, lb=None, ub=None, min_data_in_leaf=None):
     df['right_n'] = df.left_n.iloc[-1] - df.left_n.values
     if min_data_in_leaf is not None:
         m = min_data_in_leaf
-        assert isinstance(m, int)
         assert m >= 1
         df = df[df.left_n >= m]
-        df = df[df.right_n >= m]
+        df = df[df.right_n + 1 >= m]
         if df.shape[0] < 2:
             return {
-                'deviance_improvement': -1,
+                'deviance_improvement': -np.inf,
                 'idx': None, 'value': None, 'n': n_ob
             }
+    # Drop the final row, as splitting on it would imply a right-leaf size of 0
+    value = df.value
+    df = df.iloc[:-1]
     # Width of bin to the left, right
     df['left_w'] = df.value - lb
     df['right_w'] = ub - df.value
@@ -82,8 +104,8 @@ def search_split(df, lb=None, ub=None, min_data_in_leaf=None):
     # null negative log likelihood
     nnll = -n_ob*np.log(null_dens)
     assert nnll >= df.neg_ll.max() - 1e-12
-    idx = df.neg_ll.iloc[:(df.shape[0]-1)].idxmin()
-    value = (df.value.loc[idx] + df.value.loc[idx + 1])/2
+    idx = df.neg_ll.idxmin()
+    value = (value.loc[idx] + value.loc[idx + 1])/2
     bestll = df.neg_ll.loc[idx]
     di = nnll - bestll
     assert di > - np.inf
@@ -91,7 +113,9 @@ def search_split(df, lb=None, ub=None, min_data_in_leaf=None):
     return {
         'deviance_improvement': di,
         'idx': np.int(idx+1), # plus 1 because we want df.iloc[:idx] to include the original idx (to create the left leaf)
-        'value': value, 'n': n_ob}
+        'value': value,
+        'n': n_ob
+    }
 
 class Node(object):
     def __init__(self, lb, ub):
@@ -117,9 +141,7 @@ class Node(object):
 
 class BinaryDensityEstimationTree(ClassUtils):
     def __init__(self, params=None):
-        self.params = default_params()
-        if params is not None:
-            self.params.update(params)
+        self.params = accept_params(params)
         self.verbose = self.params.pop('verbose')
 
     def _accept_data(self, df):
@@ -128,34 +150,52 @@ class BinaryDensityEstimationTree(ClassUtils):
         self.df.index = range(df.shape[0])
 
     def _plant_the_tree(self):
-        try:
-            self.root = Node(
-                lb={'idx': np.int(0), 'value': self.df.value.iloc[0]},
-                ub={'idx': np.int(self.df.shape[0]), 'value': self.df.value.iloc[-1]}
-            )
-        except:
-            pdb.set_trace()
+        self.root = Node(
+            lb={'idx': np.int(0), 'value': self.df.value.iloc[0]},
+            ub={'idx': np.int(self.df.shape[0]), 'value': self.df.value.iloc[-1]}
+        )
         self.last_node_idx = 0
         self.nodes = {self.last_node_idx: self.root}
         mdil = self.params['min_data_in_leaf']
-        splt = search_split(self.df.copy(), min_data_in_leaf=mdil)
+        splt = _search_split(self.df.copy(), min_data_in_leaf=mdil)
         self.leaves = pd.DataFrame(splt, index=[0])
 
     def _continue_splitting(self):
-        if self.leaves.shape[0] >= self.params['max_bins']:
-            self.vp("stopped splitting because max_bins")
-            return False
+        '''
+            - Decide whether to split again
+            - If so, define the best node to split on
+        '''
+        # Identify best node to split on
         self.leaves.sort_values('deviance_improvement', inplace=True)
-        di = self.leaves.deviance_improvement.iloc[-1]
         idx = self.leaves.idx.iloc[-1]
         val = self.leaves.value.iloc[-1]
+        target_n_bins = self.params['n_bins']
+        n_bins = self.leaves.shape[0]
+        if np.isnan(idx):
+            if n_bins == target_n_bins:
+                return False
+            mdil= self.params['min_data_in_leaf']
+            if (target_n_bins is not None) and (mdil is not None):
+                warnings.warn("min_data_in_leaf is " + str(mdil)
+                    + ", which limits the number of bins to " + str(self.leaves.shape[0])
+                    + " even though you requested n_bin = " + str(target_n_bins))
+            else:
+                raise Exception("Terminated for unknown reason")
+            return False
+        self.threshold = {'idx': np.int(idx), 'value': val}
+        self.best_node = self.leaves.index.values[-1]
+
+        # Decide whether to continue splitting
+        if target_n_bins is not None:
+            return (n_bins < target_n_bins)
+        if n_bins >= self.params['max_bins']:
+            self.vp("stopped splitting because max_bins")
+            return False
         # The number of leaf nodes is the number of distinct fitted
         #   density values, essentially the k (# of parameters) in the information criterion:
-        pseudo_akaike_k = self.leaves.shape[0]
+        pseudo_akaike_k = n_bins
         assert (self.last_node_idx/2) + 1 == pseudo_akaike_k # sanity check
-        if di > self.params['lambda'] * pseudo_akaike_k:
-            self.threshold = {'idx': np.int(idx), 'value': val}
-            self.best_node = self.leaves.index.values[-1]
+        if self.leaves.deviance_improvement.iloc[-1] > self.params['lambda'] * pseudo_akaike_k:
             return True
         self.vp("stopped splitting because lambda, information criterion")
         return False
@@ -164,23 +204,20 @@ class BinaryDensityEstimationTree(ClassUtils):
         mdil = self.params['min_data_in_leaf']
         df = self.df.iloc[node.lb['idx']:node.ub['idx']].copy()
         if df.shape[0] > 1:
-            return search_split(df, lb=node.lb['value'], ub=node.ub['value'], min_data_in_leaf=mdil)
+            return _search_split(df, lb=node.lb['value'], ub=node.ub['value'], min_data_in_leaf=mdil)
         else:
             return {'deviance_improvement': -1, 'idx': None, 'value': None, 'n': df.n_obs.values[0]}
 
     def _grow_the_tree(self):
         while self._continue_splitting():
             node = self.nodes[self.best_node]
-            try:
-                node.split(self.threshold)
-            except:
-                pdb.set_trace()
+            node.split(self.threshold)
             nl = node.left
             nr = node.right
             i = self.last_node_idx
             self.nodes[i + 1] = nl
             self.nodes[i + 2] = nr
-            # precompute the new leaves best split points
+            # precompute the new leaves' best split points
             snl = self._search_split(nl)
             snr = self._search_split(nr)
             assert snl['idx'] not in self.leaves.idx.values

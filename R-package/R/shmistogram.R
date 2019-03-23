@@ -6,6 +6,10 @@ default_plotting_params = function(){
     ))
 }
 
+pycat = function(...){
+    cat(reticulate::py_capture_output(...))
+}
+
 #' A class of methods for generating a shmistogram
 #' 
 #' @details "Segment" refers to the line segements used to represent
@@ -19,7 +23,12 @@ SegmentShmistogram = R6::R6Class(
         n_data_types = NULL,
         initialize = function(data, params=list()){
             self$validate_binning_params(params$binning_params)
-            shm = do.call(pyshmistogram$Shmistogram, c(list(x=data), params))
+            pycat(
+                shm <- do.call(
+                    pyshmistogram$Shmistogram, 
+                    c(list(x=data), params)
+                )
+            )
             self$unpack_data(shm)
         },
         validate_binning_params = function(params){
@@ -175,6 +184,8 @@ SegmentShmistogram = R6::R6Class(
         }
     )
 )
+
+
 
 #' Plot a shmistogram
 #' 

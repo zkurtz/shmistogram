@@ -1,3 +1,21 @@
+## Installation
+
+Python backend (everything except graphics):
+- install python 3.6+
+- `pip install git+https://github.com/zkurtz/shmistogram.git#egg=shmistogram`
+- test your installation by running [demo.py](demo/demo.py)
+
+R graphics front end:
+- install R 3.5.2+
+- then do
+    ```
+    install.packages("devtools")
+    library(devtools)
+    devtools::install_github("zkurtz/shmistogram/R-package")
+    ```
+- Test your installation by compiling [demo.Rmd](demo/demo.Rmd).
+
+
 ## Details
 
 The default binning algorithm uses a [binary density estimation tree](shmistogram/det/__init__.py) 

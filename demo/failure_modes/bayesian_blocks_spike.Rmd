@@ -7,39 +7,26 @@ knitr::opts_chunk$set(echo = TRUE)
 reticulate::use_virtualenv('/Users/me/mycloud/repos/shmistogram/venv')
 ```
 
-## Examples
+## Bayesian blocks: extreme spiking
 
-### Cauchy Mixture
+Here is an example of a Bayesian blocks call that leads to poor visualization properties:
 
 ```{r fig.width=9, fig.height=5}
 library(shmistogram)
 set.seed(0)
 py = reticulate::import("shmistogram")
 data = py$simulations$cauchy_mixture(10000L)
-det = shmistogram(
-    data, 
-    params=list(
-        binning_method='density_tree',
-        binning_params=list(
-            #lambda=0.5, 
-            n_bins=26),
-        verbose=TRUE
-    ),
-    plotting_params=list(main="Density tree"),
-    return_data=TRUE
-)
-```
-
-```{r fig.width=9, fig.height=5}
 bayb = shmistogram(data, 
     params=list(
         binning_method='bayesian_blocks',
-        binning_params=list(gamma=0.005), # smaller gamma -> fewer bins
         verbose=TRUE
     ),
     plotting_params=list(main="Bayesian blocks"),
     return_data=TRUE
 )
-stopifnot(nrow(det$data$crowd) == nrow(bayb$data$crowd))
 ```
 
+The problem is clear upon examining the underlying bins: The potential for an extremely narrow bin creates the risk of exploding the density. Notice the bin with only 3 observations.
+```{r}
+round(bayb$data$crowd, 2)
+```

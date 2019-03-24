@@ -1,5 +1,4 @@
-from . import agglomerate as agg
-from . import det
+from . import binners
 from . import plot
 from .shmistogram import Shmistogram
 from . import simulations

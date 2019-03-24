@@ -2,17 +2,19 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 
-from .utils import ClassUtils
+import pdb
+
+from ..utils import ClassUtils
 
 def default_params():
     '''
-    :param max_bins: hard upper bound on the number of bins in the continuous component
+    :param n_bins: hard upper bound on the number of bins in the continuous component
         of the shmistogram
     :param prebin_maxbins: (int) pre-bin the points as you would in a standard
         histogram with at most `prebin_maxbins` bins to limit the computational cost
     '''
     return {
-        'max_bins': None,
+        'n_bins': None,
         'prebin_maxbins': 100,
         'verbose': False
     }
@@ -88,11 +90,8 @@ def collapse_one(bins, k):
     assert (df.ub - df.lb).min() > 0
     df['width'] = df.ub - df.lb
     df['rate'] = df.freq / df.width
-    return pd.concat([
-        bins.iloc[:k],
-        df,
-        bins.iloc[k + 2:]
-    ]).reset_index(drop=True)
+    bins_minus_one = pd.concat([ bins.iloc[:k], df, bins.iloc[k + 2:] ]).reset_index(drop=True)
+    return bins_minus_one
 
 class Agglomerator(ClassUtils):
     def __init__(self, params=None):
@@ -104,14 +103,14 @@ class Agglomerator(ClassUtils):
     def fit(self, df):
         self.N = df.n_obs.sum()
         self.df = df
-        bins = self._bins_init()
-        if self.params['max_bins'] is None:
-            nrow = len(self.df.shape[0])
-            self.params['max_bins'] = round(np.log(nrow+1) ** 1.5)
-        while bins.shape[0] > self.params['max_bins']:
-            fms = forward_merge_score(bins)
-            bins = collapse_one(bins, np.argmax(fms))
-        self.bins = bins
+        self._bins_init()
+        if self.params['n_bins'] is None:
+            nrow = self.df.shape[0]
+            self.params['n_bins'] = round(np.log(nrow+1) ** 1.5)
+        while self.bins.shape[0] > self.params['n_bins']:
+            fms = forward_merge_score(self.bins)
+            self.bins = collapse_one(self.bins, np.argmax(fms))
+        return self.bins
 
     def _bin_init(self, xs):
         df = self.df.iloc[xs]
@@ -149,5 +148,5 @@ class Agglomerator(ClassUtils):
             except:
                 raise Exception("The bin width is 0, which should not be possible")
         bins['rate'] =  bins.freq/bins.width
-        return bins
+        self.bins = bins
 

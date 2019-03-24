@@ -14,11 +14,11 @@ def test_det_n_bin():
     np.random.seed(0)
     data = shm.simulations.cauchy_mixture(n=N, truncate=False)
     assert data.shape[0] == N
-    det = shm.Shmistogram(data,
-        binning_method='density_tree',
-        binning_params={
+    binner = shm.binners.DensityEstimationTree(
+        params={
             'n_bins': N,
             'min_data_in_leaf': 1
         }
     )
+    det = shm.Shmistogram(data, binner=binner)
     assert det.bins.shape[0] == N

@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 import warnings
-import pdb
 
 from ..utils import ClassUtils
 
@@ -18,8 +17,17 @@ def default_params():
         'verbose': False
     }
 
+def check_args_expected(args, defaults):
+    if args is None:
+        return None
+    assert isinstance(args, dict)
+    invalid_params = list(set(args.keys()) - set(defaults.keys()))
+    if len(invalid_params) > 0:
+        raise Exception("you passed invalid params " + ', '.join(invalid_params))
+
 def accept_params(params):
     p = default_params()
+    check_args_expected(params, p)
     if params is None:
         return p
     p.update(params)
@@ -139,7 +147,8 @@ class Node(object):
         self.left = Node(lb = self.lb, ub = threshold)
         self.right = Node(lb = threshold, ub = self.ub)
 
-class BinaryDensityEstimationTree(ClassUtils):
+class DensityEstimationTree(ClassUtils):
+    ''' Univariate density estimation with a binary tree '''
     def __init__(self, params=None):
         self.params = accept_params(params)
         self.verbose = self.params.pop('verbose')
@@ -235,8 +244,9 @@ class BinaryDensityEstimationTree(ClassUtils):
             self._accept_data(df)
             self._plant_the_tree()
             self._grow_the_tree()
+        return self._bins()
 
-    def bins(self):
+    def _bins(self):
         ''' Identify all leaf bins in ascending order '''
         if self.N == 0:
             return pd.DataFrame({

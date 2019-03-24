@@ -7,7 +7,7 @@ setup(
     version=__version__,
     packages=[
         'shmistogram',
-        'shmistogram.det',
+        'shmistogram.binners',
         'shmistogram.plot',
         'shmistogram.simulations'
     ],

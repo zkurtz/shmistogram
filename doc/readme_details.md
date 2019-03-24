@@ -29,14 +29,15 @@ the number of leaves. This approach is inspired by the Akaike information criter
 (AIC), although this may be an abuse of the criterion in the sense that we're using 
 it as part of a greedy iterative procedure instead of using it to compare fully-formed models. 
 
-## Related work
-
 The variable-width binning algorithms of 
 [bayesian block representations](https://arxiv.org/pdf/1207.5578.pdf) 
-deserve consideration [TODO] as drop-in replacements for 
-our density tree binning algorithm. See our [demo](demo/bayesian_blocks.ipynb) for working code, or  
+provide an alternative to our default binning algorithm. See [demo](demo/bayesian_blocks.ipynb) for
+an example. See also
 [Python Perambulations](https://jakevdp.github.io/blog/2012/09/12/dynamic-programming-in-python/) 
-for light conceptual introduction.
+for a light conceptual introduction to Bayesian blocks.
+
+
+## References
 
 Statistical efficiency considerations receive thorough treatment in
 [Efficient Density Estimation via Piecewise Polynomial 
@@ -52,3 +53,7 @@ such as [this](https://gitlab.cern.ch/landerli/density-estimation-trees) or
 ## Disclaimer
 
 This repo is young, has practically no unit tests, and should be expected to change substantially. Use with caution.
+
+## License
+
+This project is licensed under the terms of the MIT license. See LICENSE for additional details.

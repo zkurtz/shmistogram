@@ -3,7 +3,7 @@ matplotlib.use('TkAgg')
 from matplotlib import pyplot as plt
 import numpy as np
 
-def bins(edges, masses, name='x', color='#BEBEBE', return_plt=True):
+def bins(edges, masses, name='x', color='#BEBEBE', return_plt=True, show=True):
     '''
     :param edges: (1-d numpy array) A vector of bin edges
     :param masses: (1-d numpy array) A vector of the mass per bin
@@ -26,5 +26,7 @@ def bins(edges, masses, name='x', color='#BEBEBE', return_plt=True):
     rates = masses/widths
     # Plot
     ax.fill_between(edges.repeat(2)[1:-1], rates.repeat(2), facecolor=color)
+    if show:
+        plt.show()
     if return_plt:
         return ax

@@ -7,6 +7,7 @@ from . import agglomerate as agg
 from . import det
 from .utils import ClassUtils
 from .tabulation import SeriesTable
+from . import plot
 
 class Shmistogram(ClassUtils):
     def __init__(self, x,
@@ -73,61 +74,15 @@ class Shmistogram(ClassUtils):
         assert self.loners.df.n_obs.sum() + self.crowd.df.n_obs.sum() == st.df.n_obs.sum()
         self.loner_crowd_shares = np.array([self.loners.n, self.crowd.n]) / self.n_obs
 
-    def _bin_init(self, xs):
-        df = self.crowd.df.iloc[xs]
-        stats_dict = {
-            'lb': df.index.min(),
-            'ub': df.index.max(),
-            'freq': df.n_obs.sum()
-        }
-        return stats_dict
-
-    def _bins_init(self):
-        # Prior to beginning any agglomeration routine, we do a corse pre-binning
-        #   by simple dividing the data into approximately equal-sized groups (leading
-        #   to non-uniform bin widths)
-        nc = self.crowd.df.shape[0]
-        if nc == 0:
-            return pd.DataFrame({
-                'freq': [],
-                'lb': [],
-                'ub': [],
-                'width': [],
-                'rate': []
-            })
-        prebin_maxbins = min(nc, self.prebin_maxbins)
-        bin_idxs = np.array_split(np.arange(nc), prebin_maxbins)
-        bins = pd.DataFrame([self._bin_init(xs) for xs in bin_idxs])
-        gap_margin = (bins.lb.values[1:] - bins.ub.values[:-1])/2
-        cuts = (bins.lb.values[1:] - gap_margin).tolist()
-        bins.lb = [bins.lb.values[0]] + cuts
-        bins.ub = cuts + [bins.ub.values[-1]]
-        bins['width'] = bins.ub - bins.lb
-        if nc > 1: # else, nc=1 and the bin has a single value with lb=ub, so width=0
-            try:
-                assert bins.width.min() > 0
-            except:
-                raise Exception("The bin width is 0, which should not be possible")
-        bins['rate'] =  bins.freq/bins.width
-        return bins
-
     def _agglomerate_crowd(self, binning_params):
-        self.binning_params = agg.default_params()
-        if binning_params is not None:
-            self.binning_params.update(binning_params)
-        bins = self._bins_init()
-        if self.binning_params['max_bins'] is None:
-            n_crowd = len(self.crowd.df.shape[0])
-            self.binning_params['max_bins'] = round(np.log(n_crowd+1) ** 1.5)
-        while bins.shape[0] > self.binning_params['max_bins']:
-            fms = agg.forward_merge_score(bins)
-            bins = agg.collapse_one(bins, np.argmax(fms))
-        self.bins = bins
+        self.binner = agg.Agglomerator(binning_params)
+        self.binner.fit(self.crowd.df)
+        self.bins = self.binner.bins()
 
     def _density_tree(self, binning_params):
-        self.det = det.BinaryDensityEstimationTree(binning_params)
-        self.det.fit(self.crowd.df)
-        self.bins = self.det.bins()
+        self.binner = det.BinaryDensityEstimationTree(binning_params)
+        self.binner.fit(self.crowd.df)
+        self.bins = self.binner.bins()
 
     def _bayesian_blocks(self, binning_params):
         '''
@@ -151,5 +106,9 @@ class Shmistogram(ClassUtils):
         self.bins = df
 
     def plot(self):
-        # TODO
-        pass
+        ''' Currently plots only the bins (none of the loners or nulls) '''
+        le = self.bins.lb.values
+        re = np.array([self.bins.ub.values[-1]])
+        edges = np.concatenate((le, re))
+        return plot.bins(edges=edges, masses=self.bins.freq.values)
+

@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 
+from .utils import ClassUtils
+
 def default_params():
     '''
     :param max_bins: hard upper bound on the number of bins in the continuous component
@@ -11,7 +13,8 @@ def default_params():
     '''
     return {
         'max_bins': None,
-        'prebin_maxbins': 100
+        'prebin_maxbins': 100,
+        'verbose': False
     }
 
 def rate_similarity(n1, w1, n2, w2):
@@ -90,3 +93,61 @@ def collapse_one(bins, k):
         df,
         bins.iloc[k + 2:]
     ]).reset_index(drop=True)
+
+class Agglomerator(ClassUtils):
+    def __init__(self, params=None):
+        self.params = default_params()
+        if params is not None:
+            self.params.update(params)
+        self.verbose = self.params.pop('verbose')
+
+    def fit(self, df):
+        self.N = df.n_obs.sum()
+        self.df = df
+        bins = self._bins_init()
+        if self.params['max_bins'] is None:
+            nrow = len(self.df.shape[0])
+            self.params['max_bins'] = round(np.log(nrow+1) ** 1.5)
+        while bins.shape[0] > self.params['max_bins']:
+            fms = forward_merge_score(bins)
+            bins = collapse_one(bins, np.argmax(fms))
+        self.bins = bins
+
+    def _bin_init(self, xs):
+        df = self.df.iloc[xs]
+        stats_dict = {
+            'lb': df.index.min(),
+            'ub': df.index.max(),
+            'freq': df.n_obs.sum()
+        }
+        return stats_dict
+
+    def _bins_init(self):
+        # Prior to beginning any agglomeration routine, we do a coarse pre-binning
+        #   by simple dividing the data into approximately equal-sized groups (leading
+        #   to non-uniform bin widths)
+        nc = self.df.shape[0]
+        if nc == 0:
+            return pd.DataFrame({
+                'freq': [],
+                'lb': [],
+                'ub': [],
+                'width': [],
+                'rate': []
+            })
+        prebin_maxbins = min(nc, self.params['prebin_maxbins'])
+        bin_idxs = np.array_split(np.arange(nc), prebin_maxbins)
+        bins = pd.DataFrame([self._bin_init(xs) for xs in bin_idxs])
+        gap_margin = (bins.lb.values[1:] - bins.ub.values[:-1])/2
+        cuts = (bins.lb.values[1:] - gap_margin).tolist()
+        bins.lb = [bins.lb.values[0]] + cuts
+        bins.ub = cuts + [bins.ub.values[-1]]
+        bins['width'] = bins.ub - bins.lb
+        if nc > 1: # else, nc=1 and the bin has a single value with lb=ub, so width=0
+            try:
+                assert bins.width.min() > 0
+            except:
+                raise Exception("The bin width is 0, which should not be possible")
+        bins['rate'] =  bins.freq/bins.width
+        return bins
+

@@ -1,4 +1,8 @@
+import matplotlib
+matplotlib.use('TkAgg')
+from matplotlib import pyplot as plt
 import numpy as np
+import pdb
 
 from . import binners
 from .utils import ClassUtils
@@ -65,10 +69,16 @@ class Shmistogram(ClassUtils):
         assert self.loners.df.n_obs.sum() + self.crowd.df.n_obs.sum() == st.df.n_obs.sum()
         self.loner_crowd_shares = np.array([self.loners.n, self.crowd.n]) / self.n_obs
 
-    def plot(self, kwargs):
+    def plot(self, ax=None, name='values', outfile=None):
         ''' Currently plots only the bins (none of the loners or nulls) '''
-        le = self.bins.lb.values
-        re = np.array([self.bins.ub.values[-1]])
-        edges = np.concatenate((le, re))
-        return plot.bins(edges=edges, masses=self.bins.freq.values, **kwargs)
+        plotter = plot.ShmistoGrammer(
+            bins=self.bins,
+            loners=self.loners.df,
+            loner_crowd_shares=self.loner_crowd_shares,
+            name=name
+        )
+        plotter.plot(ax=ax)
+        plt.gcf().subplots_adjust(bottom=0.25)
+        if outfile is not None:
+            plt.savefig(outfile)
 

@@ -9,11 +9,16 @@ data = np.concatenate((unif, multi))
 
 # Build the shmistogram using a density tree (default)
 shm = sh.Shmistogram(data)
-# Examine the resulting multinomial 'loner' distribution and piecewise-uniform 'crowd' distribution:
-print(shm.loners.df)
-print(shm.bins)
-# Observe the portion of observations that are loners versus crowd:
-print(shm.loner_crowd_shares)
+shm.plot()
+
+
+# # Examine the resulting multinomial 'loner' distribution and piecewise-uniform 'crowd' distribution:
+# print(shm.loners.df)
+# print(shm.bins)
+# # Observe the portion of observations that are loners versus crowd:
+# print(shm.loner_crowd_shares)
+
+
 
 # Build the shmistogram using bayesian blocks
 shm = sh.Shmistogram(data, binner = sh.binners.BayesianBlocks({'gamma': 0.03}))

@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import warnings
+import pdb
 
 from ..utils import ClassUtils
 
@@ -57,7 +58,7 @@ def _search_split(df, lb=None, ub=None, min_data_in_leaf=None):
     :param ub: (float) a left interval bound, which may be slightly less than the minimum df.index.value
     :return: {'idx': idx, 'threshold': t, 'divergence_improvement': ??}
     '''
-    n = df.shape[0]
+    n = df.n_obs.sum() #df.shape[0]
     assert n > 1
     n_ob = df.n_obs.sum()
     xmin = df.value.iloc[0]
@@ -112,9 +113,11 @@ def _search_split(df, lb=None, ub=None, min_data_in_leaf=None):
     # null negative log likelihood
     nnll = -n_ob*np.log(null_dens)
     assert nnll >= df.neg_ll.max() - 1e-12
-    idx = df.neg_ll.idxmin()
+    n_min = df[['left_n', 'right_n']].min(axis=1)
+    adj_neg_ll = df.neg_ll * (1 + 0.05 * np.exp(- n_min/10 ))
+    idx = adj_neg_ll.idxmin()
     value = (value.loc[idx] + value.loc[idx + 1])/2
-    bestll = df.neg_ll.loc[idx]
+    bestll = adj_neg_ll.loc[idx]
     di = nnll - bestll
     assert di > - np.inf
     assert di < np.inf
@@ -122,6 +125,7 @@ def _search_split(df, lb=None, ub=None, min_data_in_leaf=None):
         'deviance_improvement': di,
         'idx': np.int(idx+1), # plus 1 because we want df.iloc[:idx] to include the original idx (to create the left leaf)
         'value': value,
+        #'n_min': min(df.loc[idx].left_n, df.loc[idx].right_n),
         'n': n_ob
     }
 
@@ -204,7 +208,8 @@ class DensityEstimationTree(ClassUtils):
         #   density values, essentially the k (# of parameters) in the information criterion:
         pseudo_akaike_k = n_bins
         assert (self.last_node_idx/2) + 1 == pseudo_akaike_k # sanity check
-        if self.leaves.deviance_improvement.iloc[-1] > self.params['lambda'] * pseudo_akaike_k:
+        threshold = self.params['lambda'] * pseudo_akaike_k
+        if self.leaves.deviance_improvement.iloc[-1] > threshold:
             return True
         self.vp("stopped splitting because lambda, information criterion")
         return False

@@ -1,1 +1,2 @@
-from .bins import bins
+from .shmistogrammer import ShmistoGrammer
+from .shmistogrammer import standard_histogram

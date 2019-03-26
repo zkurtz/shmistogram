@@ -7,69 +7,69 @@ The shmistogram is a better histogram. Key differences include
 - estimating density with better accuracy and fewer bins than a histogram 
 by hierarchically grouping points into variable-width bins
 
-Functionality is split across two packages. The python shmistogram module performs all binning and 
-tabulation computations. The R package offers a visualization, using reticulate to access the python back-end.
+## Example
 
-Examples
---------
+Suppose we simulate draws from a triangular distribution (the 'crowd'), 
+supplemented with a couple of mode points ('loners'), and some null values:
 
-### Mixed data types
+```python
+from matplotlib import pyplot as plt
+import numpy as np
+import shmistogram as sh
 
-A shmistogram emphasizes point masses that may occur in a continuous variable, explicitly decomposing the distribution into a mixture of a multinomial and a piecewise uniform distribution. Such point masses are quite common:
+# Simulate a mixture of a uniform distribution mixed with a few point masses
+np.random.seed(0)
+crowd = np.random.triangular(-10, -10, 70, size=500)
+loners = np.array([0]*40 + [42]*20)
+null = np.array([np.nan]*100)
+data = np.concatenate((crowd, loners, null))
 
--   inconsistent rounding any continuous variable can introduce a mixture of point masses and relatively continuous observations
--   "age of earning first driver's license" plausibly has structural modes at the legal minimum (which may vary by state) and otherwise vary continuously
+fig, axes = plt.subplots(1, 2)
 
-Let's simulate a uniform distribution mixed with two point masses and a couple missing observations:
+# Build a standard histogram with matplotlib.pyplot.hist defaults
+sh.plot.standard_histogram(data[~np.isnan(data)], ax=axes[0], name='mixed data')
 
-``` r
-set.seed(1)
-unif = runif(n=100, min=-10, max=100)
-multi = c(rep(0, 20), rep(42, 10), rep(NA, 10))
-data = c(unif, multi)
-par(mfrow = c(1, 2))
-hist(data, border=NA, col='grey', main = 'Histogram')
-shmistogram::shmistogram(data)
+# Build a shmistogram
+shm = sh.Shmistogram(data)
+shm.plot(ax=axes[1], name='mixed data')
+
+fig.tight_layout()
 ```
 
-![](demo/demo_files/figure-markdown_github/unnamed-chunk-1-1.png)
+![](doc/chunks/mixed.png?raw=true "title")
 
-The histogram obscures the point masses somewhat. By contrast, the shmistogram uses red line segments to emphasize them. The legend bar at the top shows the relative portions of the data that compose the point masses (the "loners"), the relatively continous portion (the "crowd") and the missing values.
+The histogram obscures the point masses somewhat and says nothing about missing values. 
+By contrast, the shmistogram uses red line segments to emphasize the point masses, and
+the legend bar highlights the relative portions of the data in the crowd versus
+the point masses versus the null values.
 
-A regularization term in the shmistogram binning algorithm (see [details](#Details)) limits the number of shmistogram bins, evidently giving it an advantage over default histogram binning when the target is a uniform density.
+## Exploratory data analysis
 
-### Variable bin width
+The use cases for visualizing a variable as a mixture of 
+(1) a multinomial for point masses and 
+(2) a continuous distribution is quite common:
+- inconsistent rounding any continuous variable can introduce a mixture of point masses and relatively continuous observations
+- "age of earning first driver's license" plausibly has structural modes at the 
+legal minimum (which may vary by state) and otherwise vary continuously
 
-The shmistogram's adaptive bin width leads to a higher-fidelity representation of complicated distributions without substantially increasing the number of bins:
+## A scalable and generative density estimator
 
-``` r
-set.seed(0)
-data = c(
-    rnorm(2000, mean=0, sd=10),
-    rnorm(500, mean = 4, sd = 0.5)
-)
-par(mfrow = c(1, 2))
-hist(data, border=NA, col='grey', main = 'Histogram')
-shmistogram::shmistogram(data)
-```
+Apart from the visualization use case, the shmistogram constructs a 
+*scalable* and *generative* univariate density estimator that works well 
+as one of the required inputs of the high dimensional CADE density estimation algorithm 
+(See [pydens](https://github.com/zkurtz/pydens)).
 
-![](demo/demo_files/figure-markdown_github/unnamed-chunk-2-1.png)
+The shmistogram's adaptive bin width leads to a higher-fidelity representation of 
+complicated distributions without substantially increasing the number of bins.
+This is not a new idea, and shmistogram wraps multiple binning
+methods that the user can choose from. See 
+[binning_methods.ipynb](demo/binning_methods.ipynb) for details.
+
 ## Installation
 
-Python backend (everything except graphics):
 - install python 3.6+
 - `pip install git+https://github.com/zkurtz/shmistogram.git#egg=shmistogram`
 - test your installation by running [demo.py](demo/demo.py)
-
-R graphics front end:
-- install R 3.5.2+
-- then do
-    ```
-    install.packages("devtools")
-    library(devtools)
-    devtools::install_github("zkurtz/shmistogram/R-package")
-    ```
-- Test your installation by compiling [demo.Rmd](demo/demo.Rmd).
 
 
 ## Details

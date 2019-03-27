@@ -1,5 +1,3 @@
-import matplotlib
-matplotlib.use('TkAgg')
 from matplotlib import collections  as mc
 from matplotlib import pyplot as plt
 from matplotlib.patches import Rectangle

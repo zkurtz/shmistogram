@@ -46,8 +46,8 @@ the point masses versus the null values.
 ## Exploratory data analysis
 
 The use cases for visualizing a variable as a mixture of 
-(1) a multinomial for point masses and 
-(2) a continuous distribution is quite common:
+a multinomial for point masses and 
+a continuous distribution are quite common:
 - inconsistent rounding any continuous variable can introduce a mixture of point masses and relatively continuous observations
 - "age of earning first driver's license" plausibly has structural modes at the 
 legal minimum (which may vary by state) and otherwise vary continuously

@@ -7,8 +7,6 @@ The shmistogram is a better histogram. Key differences include
 - estimating density with better accuracy and fewer bins than a histogram 
 by hierarchically grouping points into variable-width bins
 
-## Example
-
 Suppose we simulate draws from a triangular distribution (the 'crowd'), 
 supplemented with a couple of mode points ('loners'), and some null values:
 
@@ -43,28 +41,6 @@ By contrast, the shmistogram uses red line segments to emphasize the point masse
 the legend bar highlights the relative portions of the data in the crowd versus
 the point masses versus the null values.
 
-## Exploratory data analysis
-
-The use cases for visualizing a variable as a mixture of 
-a multinomial for point masses and 
-a continuous distribution are quite common:
-- inconsistent rounding any continuous variable can introduce a mixture of point masses and relatively continuous observations
-- "age of earning first driver's license" plausibly has structural modes at the 
-legal minimum (which may vary by state) and otherwise vary continuously
-
-## A scalable and generative density estimator
-
-Apart from the visualization use case, the shmistogram constructs a 
-*scalable* and *generative* univariate density estimator that works well 
-as one of the required inputs of the high dimensional CADE density estimation algorithm 
-(See [pydens](https://github.com/zkurtz/pydens)).
-
-The shmistogram's adaptive bin width leads to a higher-fidelity representation of 
-complicated distributions without substantially increasing the number of bins.
-This is not a new idea, and shmistogram wraps multiple binning
-methods that the user can choose from. See 
-[binning_methods.ipynb](demo/binning_methods.ipynb) for details.
-
 ## Installation
 
 - install python 3.6+
@@ -74,13 +50,61 @@ methods that the user can choose from. See
 
 ## Details
 
+### Default behavior
+
+Given a 1-D array of numeric (or `np.nan`) values `data`, the shmistogram 
+`shmistogram.Shmistogram(data)` 
+- counts every unique value
+- splits the data into as many as 3 subsets:
+    - `np.nan`
+    - "Loners" are points with a count above the threshold set by the
+    argument `loner_min_count`. Shmistogram sets this dynamically by default
+    as a somewhat log-linear function of `len(data)`. With 100 points, 
+    the threshold is 8; with 100,000 it is 18.
+    - The "crowd" is all remaining points.
+- bins the "crowd" using a density estimation tree.
+
+Calling the plot method on the resulting object displays all components
+of the distribution on a single figure.
+
+### Why shmistogram?
+
+#### Use case 1: Exploratory data analysis
+
+A shmistogram can be more informative than a histogram by separating 
+continous and discrete variation:
+- inconsistent rounding any continuous variable can induce a mixture of point masses and relatively continuous observations
+- "age of earning first driver's license" plausibly has structural modes at the 
+legal minimum (which may vary by state) and otherwise vary continuously
+
+#### Use case 2: Scalable, generative density estimation
+
+The shmistogram scales approximately as O(n log(n)) with default settings 
+(see [speed_testing.ipynb](demo/speed_testing.ipynb)). 
+The resulting density model is easy to sample from, as a mixture of 
+a piecewise uniform 
+distribution and a multinomial distribution. Such a simple
+estimator works well as one of the required inputs of the CADE density 
+estimation algorithm for high dimensional 
+and mixed continuous/categorical data (see [pydens](https://github.com/zkurtz/pydens)).
+
+The shmistogram's adaptive bin width leads to a higher-fidelity representation of 
+complicated distributions without substantially increasing the number of bins.
+This is not a new idea, and shmistogram wraps multiple binning
+methods that the user can choose from. See 
+[binning_methods.ipynb](demo/binning_methods.ipynb) for details.
+
+## Binning
+
 The default binning algorithm uses a [binary density estimation tree](shmistogram/det/__init__.py) 
 to iteratively split the data into smaller bins. The split location (within a bin/leaf) 
-maximizes the improvement in the deviance (i.e. in-sample negative log likelihood) 
-subject to a minimum-points-per-leaf constraint. This minimum currently defaults to 3. 
+maximizes a penalized improvement in the deviance (i.e. in-sample negative log likelihood).
+The penalty reflects
+- a hard `min_data_in_leaf` constraint. This minimum currently defaults to 3
+- a soft penalty on bins with few observations
 
-We choose the bin to split on as the bin for which splitting leads to the greatest 
-improvement in deviance. Splits proceed as long as the deviance improvement exceeds 
+We choose the bin to split on as the bin for which splitting produces the greatest 
+penalized improvement. Splits proceed as long as the deviance improvement exceeds 
 the number of leaves. This approach is inspired by the Akaike information criterion 
 (AIC), although this may be an abuse of the criterion in the sense that we're using 
 it as part of a greedy iterative procedure instead of using it to compare fully-formed models. 
@@ -92,18 +116,29 @@ an example. See also
 [Python Perambulations](https://jakevdp.github.io/blog/2012/09/12/dynamic-programming-in-python/) 
 for a light conceptual introduction to Bayesian blocks.
 
+## Wishlist
 
-## References
+**Clarify the objective:** There is a tension between optimizing a binner for 
+(a) visualization purposes, such as avoiding tall narrow bins to minimize 
+white space, or adjusting the average bin width to tell a particular story 
+and (b) minimizing a formal measure of estimation accuracy such as the 
+expectation of deviance 
+(taken over future observations from the true distribution). We should
+offer guidance on which binning method tends to be most effective
+for each of these goals.
 
-Statistical efficiency considerations receive thorough treatment in
-[Efficient Density Estimation via Piecewise Polynomial 
-Approximation](https://arxiv.org/pdf/1305.3207.pdf).
+**Optimize speed** for the default method. Scalability is a big part of the
+motivation for such a simple model, but the current implementation is
+far from optimal.
 
-For more on general density estimation trees (not specifically univariate), see
+**Compare/contrast/harmonize** our binning methods with the literature:
 - [density estimation trees](https://mlpack.org/papers/det.pdf) 
-such as [this](https://gitlab.cern.ch/landerli/density-estimation-trees) or
+such as [this](https://gitlab.cern.ch/landerli/density-estimation-trees)
 - [distribution element trees](https://arxiv.org/pdf/1610.00345.pdf) such as 
-[detpack](https://github.com/cran/detpack/blob/master/R/det1.R). Interestingly, calling `det1(x, mode=1)` on data x also produces a variable bin-width histogram.
+[detpack](https://github.com/cran/detpack/blob/master/R/det1.R). See
+[detpack_example.R](demo/detpack_example.R) for a simple variable-width binner.
+- [Efficient Density Estimation via Piecewise Polynomial 
+Approximation](https://arxiv.org/pdf/1305.3207.pdf).
 
 
 ## Disclaimer

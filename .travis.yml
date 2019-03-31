@@ -6,10 +6,3 @@ matrix:
         - pip install -r requirements.txt 
         - python setup.py install
       script: pytest
-
-#    - language: R
-#      R: 3.5.2
-#      before_install:
-#	- python setup.py develop
-#        - cd R-package
-#      script: Rscript -e 'library(devtools); devtools::test()'

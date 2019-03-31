@@ -67,7 +67,7 @@ class Shmistogram(ClassUtils):
         assert self.loners.df.n_obs.sum() + self.crowd.df.n_obs.sum() == st.df.n_obs.sum()
         self.loner_crowd_shares = np.array([self.loners.n, self.crowd.n]) / self.n_obs
 
-    def plot(self, ax=None, name='values', outfile=None):
+    def plot(self, ax=None, name='values', outfile=None, show=True):
         ''' Currently plots only the bins (none of the loners or nulls) '''
         plotter = plot.ShmistoGrammer(
             bins=self.bins,
@@ -75,7 +75,7 @@ class Shmistogram(ClassUtils):
             loner_crowd_shares=self.loner_crowd_shares,
             name=name
         )
-        plotter.plot(ax=ax)
+        plotter.plot(ax=ax, show=show)
         plt.gcf().subplots_adjust(bottom=0.25)
         if outfile is not None:
             plt.savefig(outfile)

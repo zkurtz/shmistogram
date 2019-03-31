@@ -51,7 +51,6 @@ def isclose(a, b, rel_tol=1e-12, abs_tol=0.0):
 def _search_split(df, lb=None, ub=None, min_data_in_leaf=None):
     '''
     Search for an optimal split (index and threshold value)
-
     :param df: (pd.DataFrame) the index should be the unique values and the the `n_obs` column
     is the count observations at each value
     :param lb: (float) a left interval bound, which may be slightly less than the minimum df.index.value

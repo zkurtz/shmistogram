@@ -20,7 +20,7 @@ class ShmistoGrammer:
         # Store plotting data
         self.loner_crowd_shares = loner_crowd_shares
         self.bins = bins
-        self._triag_loners(loners)
+        self._triage_loners(loners)
         # Store plot settings
         self.colors = {
             'crowd': color_crowd,
@@ -38,7 +38,7 @@ class ShmistoGrammer:
         self.ax.set_ylabel('Crowd frequency rate')
         self.ax.set_title(title)
 
-    def _triag_loners(self, loners):
+    def _triage_loners(self, loners):
         self.loners = loners[~np.isnan(loners.index)]
         self.null = loners[np.isnan(loners.index)].n_obs.sum()
 
@@ -110,12 +110,12 @@ class ShmistoGrammer:
         axl.set_ylim(0, self.loners.n_obs.max() * marg_mult)
         # add the loner count line segments
         lines = [ [(idx, 0), (idx, row.n_obs)] for idx, row in self.loners.iterrows()]
-        lc = mc.LineCollection(lines, colors=self.colors['loner'], linewidths=0.4)
+        lc = mc.LineCollection(lines, colors=self.colors['loner'], linewidths=0.6)
         axl.add_collection(lc)
         axl.plot(self.loners.index.values,
                  self.loners.n_obs.values,
                  "or", color=self.colors['loner'],
-                 markersize=2)
+                 markersize=3)
 
     def plot(self, ax=None, show=False, title='Shmistogram'):
         if self.bins.shape[0] == 0:

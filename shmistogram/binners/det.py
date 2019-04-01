@@ -189,10 +189,14 @@ class DensityEstimationTree(ClassUtils):
             mdil= self.params['min_data_in_leaf']
             if (target_n_bins is not None) and (mdil is not None):
                 warnings.warn("min_data_in_leaf is " + str(mdil)
-                    + ", which limits the number of bins to " + str(self.leaves.shape[0])
+                    + ", which limits the number of bins to " + str(n_bins)
                     + " even though you requested n_bin = " + str(target_n_bins))
             else:
-                raise Exception("Terminated for unknown reason")
+                try:
+                    # presumably there is not sufficient data to support another bin
+                    assert (n_bins + 1) * mdil >= self.df.shape[0]
+                except:
+                    raise Exception("Terminated for unknown reason")
             return False
         self.threshold = {'idx': np.int(idx), 'value': val}
         self.best_node = self.leaves.index.values[-1]

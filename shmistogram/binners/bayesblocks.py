@@ -8,7 +8,8 @@ from ..utils import ClassUtils
 def default_params():
     return {
         'gamma': 0.015,
-        'verbose': False
+        'verbose': False,
+        'sample_size': None
     }
 
 class BayesianBlocks(ClassUtils):
@@ -24,15 +25,31 @@ class BayesianBlocks(ClassUtils):
         if params is not None:
             self.params.update(params)
         self.verbose = self.params.pop('verbose')
+        self.sample_size = self.params.pop('sample_size')
+
+    def build_bin_edges(self, df):
+        vals = np.repeat(df.index.values, df.n_obs.values)
+        if self.sample_size is None:
+            bin_edges = stats.bayesian_blocks(vals, **self.params)
+        else:
+            assert isinstance(self.sample_size, int)
+            assert self.sample_size > 10
+            if self.sample_size > len(vals):
+                bin_edges = stats.bayesian_blocks(vals, **self.params)
+            else:
+                svals = np.random.choice(vals, size=self.sample_size, replace=False)
+                bin_edges = stats.bayesian_blocks(svals, **self.params)
+                bin_edges[0] = df.index.min()
+                bin_edges[-1] = df.index.max()
+        self.counts_per_bin = np.histogram(vals, bins=bin_edges)[0]
+        return bin_edges
 
     def fit(self, df):
-        vals = np.repeat(df.index.values, df.n_obs.values)
-        bin_edges = stats.bayesian_blocks(vals, **self.params)
-        counts_per_bin = np.histogram(vals, bins=bin_edges)[0]
+        bin_edges = self.build_bin_edges(df)
         bins = pd.DataFrame({
             'lb': bin_edges[:-1],
             'ub': bin_edges[1:],
-            'freq': counts_per_bin
+            'freq': self.counts_per_bin
         })
         bins['width'] = bins.ub - bins.lb
         bins['rate'] = bins.freq / bins.width

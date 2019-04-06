@@ -8,9 +8,8 @@ class ClassUtils(object):
     ''' Basic methods accessible by class inheritance '''
     def vp(self, string):
         ''' Verbose print '''
-        if not self.verbose:
-            return None
-        print(string)
+        if self.verbose:
+            print(string)
 
     def timer(self, timestamp=None, task=''):
         ''' Set a timestamp or return time since a timestamp

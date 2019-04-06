@@ -28,6 +28,7 @@ class BayesianBlocks(ClassUtils):
         self.sample_size = self.params.pop('sample_size')
 
     def build_bin_edges(self, df):
+        assert df.shape[0] > 1
         vals = np.repeat(df.index.values, df.n_obs.values)
         if self.sample_size is None:
             bin_edges = stats.bayesian_blocks(vals, **self.params)
@@ -41,6 +42,11 @@ class BayesianBlocks(ClassUtils):
                 bin_edges = stats.bayesian_blocks(svals, **self.params)
                 bin_edges[0] = df.index.min()
                 bin_edges[-1] = df.index.max()
+
+        # todo: update this temporary fix for https://github.com/astropy/astropy/issues/8558
+        if len(bin_edges) == 1:
+            bin_edges = np.array([df.index.min(), df.index.max()])
+
         self.counts_per_bin = np.histogram(vals, bins=bin_edges)[0]
         return bin_edges
 

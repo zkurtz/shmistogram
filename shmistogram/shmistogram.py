@@ -22,6 +22,7 @@ class Shmistogram(ClassUtils):
         self.verbose = verbose
         self.n_obs = len(x)
         self._set_loner_min_count(loner_min_count)
+        self._accept_binner(binner)
 
         # Tabulation
         t0 = self.timer()
@@ -32,12 +33,22 @@ class Shmistogram(ClassUtils):
 
         # Binning
         t0 = self.timer()
+        if self.crowd.df.shape[0] > 1:
+            self.bins = self.binner.fit(self.crowd.df)
+        else:
+            assert self.crowd.df.shape[0] == 0
+            self.bins = None
+        self.timer(t0, task='binning')
+
+         # Checks
+        if (self.bins is None) or (self.bins.shape[0] == 0):
+            assert self.loner_crowd_shares[1] == 0
+
+    def _accept_binner(self, binner):
         if binner is not None:
             self.binner = binner
         else:
             self.binner = binners.DensityEstimationTree()
-        self.bins = self.binner.fit(self.crowd.df)
-        self.timer(t0, task='binning')
 
     def _set_loner_min_count(self, loner_min_count):
         if loner_min_count is None:
@@ -54,21 +65,20 @@ class Shmistogram(ClassUtils):
         :param st: (SeriesTable)
         '''
         assert isinstance(st, SeriesTable)
-        idx = st.df.index
-        tn = len(idx)
-        is_loner = (st.df.n_obs >= self.loner_min_count) | np.isnan(st.df.index.values)
-        if is_loner.sum() == tn-1:
+        xdf = st.df.copy()
+        xdf['is_loner'] = (xdf.n_obs >= self.loner_min_count) | np.isnan(xdf.index.values)
+        if xdf.shape[0] - xdf.is_loner.sum() == 1:
             # If there is only one non-loner, let's call it a loner too
-            is_loner = np.array([True]*tn)
-        which_loners = idx[is_loner].tolist()
-        which_crowd = idx[~is_loner].tolist()
+            xdf.is_loner.replace(False, True, inplace=True)
+        which_loners = xdf[xdf.is_loner].index.tolist()
+        which_crowd = xdf[~xdf.is_loner].index.tolist()
         self.loners = st.select(which_loners)
         self.crowd = st.select(which_crowd)
         assert self.loners.df.n_obs.sum() + self.crowd.df.n_obs.sum() == st.df.n_obs.sum()
         self.loner_crowd_shares = np.array([self.loners.n, self.crowd.n]) / self.n_obs
 
     def plot(self, ax=None, name='values', outfile=None, show=False):
-        ''' Currently plots only the bins (none of the loners or nulls) '''
+        ''' Plot the bins, loners, and nulls '''
         plotter = plot.ShmistoGrammer(
             bins=self.bins,
             loners=self.loners.df,

@@ -26,5 +26,13 @@ setup(
         'shmistogram.plot',
         'shmistogram.simulations'
     ],
-    install_requires=requirements
+    install_requires=[
+        'astropy',
+        'matplotlib',
+        'pandas',
+        'numpy',
+        'pytz',
+        'scipy',
+        'six',
+    ]
 )

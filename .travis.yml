@@ -1,7 +1,7 @@
-matrix:
-  include:
-    - language: python
-      python: 3.7
-      install:
-        - python setup.py install
-      script: pytest
+language: python
+sudo: required
+dist: xenial
+python: "3.7"
+install:
+  - python setup.py install
+script: pytest

@@ -16,7 +16,7 @@ setup(
     description="Piecewise-uniform univariate density estimation and visualization",
     url="https://github.com/zkurtz/shmistogram",
     license='MIT',
-    long_description=long_description
+    long_description=long_description,
     packages=[
         'shmistogram',
         'shmistogram.binners',

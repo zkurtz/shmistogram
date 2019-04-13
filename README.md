@@ -43,9 +43,11 @@ the point masses versus the null values.
 
 ## Installation
 
-- install python 3.6+
-- `pip install git+https://github.com/zkurtz/shmistogram.git#egg=shmistogram`
-- test your installation by running [demo.py](demo/demo.py)
+`pip install shmistogram`
+
+Test your installation by running [demo.py](demo/demo.py)
+
+For the development version, `pip install git+https://github.com/zkurtz/shmistogram.git#egg=shmistogram`
 
 
 ## Details

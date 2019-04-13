@@ -9,3 +9,5 @@ deprecated*
 *.ipynb_checkpoints
 .DS_Store*
 dev*
+build*
+dist*

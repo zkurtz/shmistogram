@@ -4,4 +4,3 @@ from .shmistogram import Shmistogram
 from . import simulations
 
 from .version import __version__
-

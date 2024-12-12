@@ -1,4 +1,3 @@
-[![Build Status](https://travis-ci.org/zkurtz/shmistogram.svg?branch=master)](https://travis-ci.org/zkurtz/shmistogram)
 # shmistogram
 
 The shmistogram is a better histogram. Key differences include

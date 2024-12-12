@@ -1,0 +1,58 @@
+[project]
+name = "shmistogram"
+version = "0.3.0"
+description = "A smarter histogram"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "astropy >=3.1.2",
+    "matplotlib >=3.0.3",
+    "pandas >=0.24.2",
+    "scipy >=1.2.1",
+]
+
+[dependency-groups]
+dev = [
+  "pre-commit >=3.8.0",
+  "pyright >=1.1.378",
+  "ruff >=0.7.4",
+  "pytest >=8.3.2",
+]
+
+[tool.setuptools]
+py-modules = ["shmistogram"]
+
+[tool.uv]
+package = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests",]
+
+[tool.pyright]
+include = ["shmistogram", "tests"]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = [
+  # ruff defaults:
+  "E4", "E7", "E9", "F",
+  "I", # flake8-import-order
+  "TID", # flake8-tidy-imports
+  "D", # google-style docstrings
+]
+ignore = [
+  "D202", # would require one blank line after the last section of a multi-line docstring
+  "D203", # would require one blank line at start of class docstring
+  "D213", # would require multi-line docstring to start with a hard return
+  "D401", # would require imperative mood in docstring
+  "D413", # would put blank line at end of each multiline docstring
+]
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["D104"] # would require module-level documentation
+"test_*.py" = ["D"]

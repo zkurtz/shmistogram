@@ -1,6 +1,8 @@
 from copy import deepcopy
+
 import numpy as np
 import pandas as pd
+
 
 class SeriesTable(object):
     def __init__(self, series, compute_empirical_p=False):
@@ -14,20 +16,20 @@ class SeriesTable(object):
             self.name = series.name
         vc = series.value_counts(sort=False, dropna=False)
         self.df = pd.DataFrame(vc).sort_index()
-        
-        self.df = self.df.rename(columns={self.name: 'n_obs'})
+
+        self.df = self.df.rename(columns={self.name: "n_obs"})
         # Reconcile.
-        self.df = self.df.rename(columns={"count": 'n_obs'})
+        self.df = self.df.rename(columns={"count": "n_obs"})
         if compute_empirical_p:
-            self.df['empirical_p'] = self.df.n_obs/len(series)
+            self.df["empirical_p"] = self.df.n_obs / len(series)
         self.compute_empirical_p = compute_empirical_p
         assert self.df[~np.isnan(self.df.index)].index.is_monotonic_increasing
 
     def select(self, idxs):
-        ''' Return a copy of self that includes only a subset of the values '''
+        """Return a copy of self that includes only a subset of the values."""
         st = deepcopy(self)
         st.df = self.df.loc[idxs]
         st.n = st.df.n_obs.sum()
         if self.compute_empirical_p:
-            st.df['empirical_p'] /= st.df['empirical_p'].sum()
+            st.df["empirical_p"] /= st.df["empirical_p"].sum()
         return st

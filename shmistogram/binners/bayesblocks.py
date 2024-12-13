@@ -1,31 +1,29 @@
-from astropy import stats
+
 import numpy as np
 import pandas as pd
-import pdb
+from astropy import stats
 
-from ..utils import ClassUtils
+from shmistogram.utils import ClassUtils
+
 
 def default_params():
-    return {
-        'gamma': 0.015,
-        'verbose': False,
-        'sample_size': None
-    }
+    return {"gamma": 0.015, "verbose": False, "sample_size": None}
+
 
 class BayesianBlocks(ClassUtils):
-    '''
-    Compute a Bayesian block representation
+    """Compute a Bayesian block representation.
 
     :param params: Keyword args to be passed to astropy.stats.bayesian_blocks. Pass any of the arguments specified
     in [the documentation ](http://docs.astropy.org/en/stable/api/astropy.stats.bayesian_blocks.html)
     excluding `t` and `x`.
-    '''
+    """
+
     def __init__(self, params=None):
         self.params = default_params()
         if params is not None:
             self.params.update(params)
-        self.verbose = self.params.pop('verbose')
-        self.sample_size = self.params.pop('sample_size')
+        self.verbose = self.params.pop("verbose")
+        self.sample_size = self.params.pop("sample_size")
 
     def build_bin_edges(self, df):
         assert df.shape[0] > 1
@@ -52,11 +50,7 @@ class BayesianBlocks(ClassUtils):
 
     def fit(self, df):
         bin_edges = self.build_bin_edges(df)
-        bins = pd.DataFrame({
-            'lb': bin_edges[:-1],
-            'ub': bin_edges[1:],
-            'freq': self.counts_per_bin
-        })
-        bins['width'] = bins.ub - bins.lb
-        bins['rate'] = bins.freq / bins.width
+        bins = pd.DataFrame({"lb": bin_edges[:-1], "ub": bin_edges[1:], "freq": self.counts_per_bin})
+        bins["width"] = bins.ub - bins.lb
+        bins["rate"] = bins.freq / bins.width
         return bins

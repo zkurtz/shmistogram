@@ -1,1 +1,1 @@
-from .univariate import cauchy_mixture
+from shmistogram.simulations.univariate import cauchy_mixture

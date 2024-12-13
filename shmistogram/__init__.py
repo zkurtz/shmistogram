@@ -1,7 +1,3 @@
-from . import binners
-from . import plot
-from .shmistogram import Shmistogram
-from . import simulations
-
-from .version import __version__
-
+from shmistogram import binners, plot, simulations
+from shmistogram.shmistogram import Shmistogram
+from shmistogram.version import __version__

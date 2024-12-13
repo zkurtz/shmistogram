@@ -1,3 +1,4 @@
+"""Generate a Shmistogram plot from a Shmistogram object."""
 
 import numpy as np
 import pandas as pd
@@ -12,6 +13,8 @@ LEGEND_SEP = 0.025
 
 
 class ShmistoGrammer:
+    """Generate a Shmistogram plot from a Shmistogram object."""
+
     def __init__(
         self,
         loner_crowd_shares,
@@ -22,6 +25,17 @@ class ShmistoGrammer:
         color_loner="#C80638",  # red
         color_null="black",
     ):
+        """Initialize a ShmistoGrammer object.
+        
+        Args:
+            loner_crowd_shares: A tuple of the form (loner_share, crowd_share)
+            bins: A DataFrame with columns ['lb', 'ub', 'freq', 'rate']
+            loners: A DataFrame with columns ['n_obs']
+            name: The name of the x-axis
+            color_crowd: The color of the crowd
+            color_loner: The color of the loners
+            color_null: The color of the null values
+        """
         # Plot settings
         self.name = name
         # Store plotting data
@@ -107,6 +121,13 @@ class ShmistoGrammer:
         axl.plot(self.loners.index.values, self.loners.n_obs.values, "or", color=self.colors["loner"], markersize=3)
 
     def plot(self, ax=None, show=False, title="Shmistogram"):
+        """Plot the Shmistogram.
+
+        Args:
+            ax: The axis on which to plot
+            show: Whether to show the plot
+            title: The title of the plot
+        """
         if self.bins.shape[0] == 0:
             print("This data is 100% loners:")
             print(self.loners)
@@ -119,6 +140,15 @@ class ShmistoGrammer:
 
 
 def standard_histogram(data, ax=None, name="x", title="Histogram", color="#BEBEBE"):
+    """Plot a standard histogram.
+
+    Args:
+        data: The data to plot
+        ax: The axis on which to plot
+        name: The name of the x-axis
+        title: The title of the plot
+        color: The color of the plot
+    """
     if ax is not None:
         ax.hist(data, color=color)
     else:

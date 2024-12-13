@@ -1,3 +1,4 @@
+"""Agglomerative binning for shmistograms."""
 
 import numpy as np
 import pandas as pd
@@ -7,7 +8,9 @@ from shmistogram.utils import ClassUtils
 
 
 def default_params():
-    """:param n_bins: hard upper bound on the number of bins in the continuous component
+    """Return a dictionary of default parameters for the Agglomerator.
+    
+    :param n_bins: hard upper bound on the number of bins in the continuous component
         of the shmistogram
     :param prebin_maxbins: (int) pre-bin the points as you would in a standard
         histogram with at most `prebin_maxbins` bins to limit the computational cost
@@ -16,8 +19,7 @@ def default_params():
 
 
 def rate_similarity(n1, w1, n2, w2):
-    """Estimate the statistical significance of the difference between
-    two rates; return a p-value adjusted for small sample size.
+    """Estimate the statistical significance of the difference between two rates.
 
     :param n1: Count of obs in first bin
     :param w1: Width of first bin
@@ -25,6 +27,8 @@ def rate_similarity(n1, w1, n2, w2):
     :param w2: Width of second bin
     :return: An estimate of the statistical significance of the difference in empirical
     height (or 'rate') between the two bins
+    
+    Returns: a p-value adjusted for small sample size.
     """
     n_trials = n1 + n2
     h0_bin1_rate = w1 / (w1 + w2)
@@ -40,8 +44,7 @@ def rate_similarity(n1, w1, n2, w2):
 
 
 def forward_merge_score(bins):
-    """A heuristic score of the relative suitability of a merge for every
-    bin with its right-side neighbor.
+    """A heuristic score of the relative suitability of a merge for every bin with its right-side neighbor.
 
     Combines several preference-for-merging factors:
     - rate sameness: bins that share approximately the same height should be
@@ -72,7 +75,9 @@ def forward_merge_score(bins):
 
 
 def collapse_one(bins, k):
-    """:param bins: (pandas.DataFrame) contains columns 'freq', 'width', and 'rate';
+    """Collapse the kth and (k+1)th rows of the bins DataFrame.
+
+    :param bins: (pandas.DataFrame) contains columns 'freq', 'width', and 'rate';
     each row is a bin
     :param k: Index of row to collapse with (k+1)th row
     :return: same as bins but one fewer row due to collapsing
@@ -88,13 +93,26 @@ def collapse_one(bins, k):
 
 
 class Agglomerator(ClassUtils):
+    """Agglomerative binning for shmistograms.
+
+    Given a DataFrame with columns 'n_obs' and 'value', return a DataFrame
+    with columns 'freq', 'lb', 'ub', 'width', and 'rate' that represents the
+    bins of the shmistogram.
+    """
+
     def __init__(self, params=None):
+        """Initialize the Agglomerator object."""
         self.params = default_params()
         if params is not None:
             self.params.update(params)
         self.verbose = self.params.pop("verbose")
 
     def fit(self, df):
+        """Given a DataFrame with columns 'n_obs' and 'value', return a DataFrame.
+
+        Args:
+            df: DataFrame with columns 'n_obs' and 'value'
+        """
         self.N = df.n_obs.sum()
         self.df = df
         self._bins_init()
@@ -129,7 +147,7 @@ class Agglomerator(ClassUtils):
         if nc > 1:  # else, nc=1 and the bin has a single value with lb=ub, so width=0
             try:
                 assert bins.width.min() > 0
-            except:
-                raise Exception("The bin width is 0, which should not be possible")
+            except Exception as err:
+                raise Exception("The bin width is 0, which should not be possible") from err
         bins["rate"] = bins.freq / bins.width
         self.bins = bins

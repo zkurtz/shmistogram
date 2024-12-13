@@ -1,4 +1,4 @@
-from shmistogram.binners.agglomerate import Agglomerator
-from shmistogram.binners.bayesblocks import BayesianBlocks
-from shmistogram.binners.det import DensityEstimationTree
-from shmistogram.binners.scalability_testing import ScalabilityTesting
+from shmistogram.binners.agglomerate import Agglomerator as Agglomerator
+from shmistogram.binners.bayesblocks import BayesianBlocks as BayesianBlocks
+from shmistogram.binners.det import DensityEstimationTree as DensityEstimationTree
+from shmistogram.binners.scalability_testing import ScalabilityTesting as ScalabilityTesting

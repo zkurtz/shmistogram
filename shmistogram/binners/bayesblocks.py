@@ -1,3 +1,4 @@
+"""Bayesian Blocks binning."""
 
 import numpy as np
 import pandas as pd
@@ -7,6 +8,7 @@ from shmistogram.utils import ClassUtils
 
 
 def default_params():
+    """Default parameters for Bayesian Blocks binning."""
     return {"gamma": 0.015, "verbose": False, "sample_size": None}
 
 
@@ -19,6 +21,7 @@ class BayesianBlocks(ClassUtils):
     """
 
     def __init__(self, params=None):
+        """Initialize the BayesianBlocks object."""
         self.params = default_params()
         if params is not None:
             self.params.update(params)
@@ -26,6 +29,7 @@ class BayesianBlocks(ClassUtils):
         self.sample_size = self.params.pop("sample_size")
 
     def build_bin_edges(self, df):
+        """Build bin edges using Bayesian Blocks."""
         assert df.shape[0] > 1
         vals = np.repeat(df.index.values, df.n_obs.values)
         if self.sample_size is None:
@@ -49,6 +53,7 @@ class BayesianBlocks(ClassUtils):
         return bin_edges
 
     def fit(self, df):
+        """Fit the Bayesian Blocks model to the data."""
         bin_edges = self.build_bin_edges(df)
         bins = pd.DataFrame({"lb": bin_edges[:-1], "ub": bin_edges[1:], "freq": self.counts_per_bin})
         bins["width"] = bins.ub - bins.lb

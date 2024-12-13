@@ -1,3 +1,5 @@
+"""Generate a figure comparing a standard histogram to a shmistogram for mixed data."""
+
 import matplotlib
 
 matplotlib.use("Agg")

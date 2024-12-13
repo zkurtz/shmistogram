@@ -1,3 +1,8 @@
+"""Demonstrates the use of the shmistogram package.
+
+Builds a shmistogram from a mixture of a uniform distribution and a few point masses.
+"""
+
 import matplotlib
 
 matplotlib.use("TkAgg")

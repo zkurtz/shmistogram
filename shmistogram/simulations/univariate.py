@@ -1,3 +1,5 @@
+"""Simulate univariate data for testing and demonstration purposes."""
+
 import numpy as np
 from scipy import stats
 

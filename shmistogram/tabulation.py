@@ -1,3 +1,5 @@
+"""Tabulation of series data."""
+
 from copy import deepcopy
 
 import numpy as np
@@ -5,7 +7,15 @@ import pandas as pd
 
 
 class SeriesTable(object):
+    """A table of counts for a series."""
+
     def __init__(self, series, compute_empirical_p=False):
+        """Create a table of counts for a series.
+        
+        Args:
+            series: The series to tabulate.
+            compute_empirical_p: If True, compute the empirical probability of each value.
+        """
         if not isinstance(series, pd.Series):
             assert isinstance(series, np.ndarray) or isinstance(series, list)
             series = pd.Series(series)

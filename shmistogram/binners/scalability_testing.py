@@ -1,3 +1,5 @@
+"""Testing scalability of the Bayesian Blocks algorithm."""
+
 from time import time
 
 import numpy as np
@@ -9,26 +11,43 @@ from shmistogram.shmistogram import Shmistogram
 
 
 class ScalabilityTesting:
+    """Class to test the scalability of the Bayesian Blocks algorithm."""
+    
     def __init__(self, data_sets, bin_methods):
+        """Initialize the class with the data sets and binning methods.
+        
+        Args:
+            data_sets: Dictionary of data sets to test.
+            bin_methods: List of binning methods to test.
+        """
         self.datas = data_sets
         self.bin_methods = bin_methods
         self.build()
 
     def get_binner_method(self, method):
+        """Get the binner method based on the input method."""
         if method == "det":
             return None
         elif method == "bayesblocks":
             return BayesianBlocks()
 
     def build_one(self, data, method):
+        """Build the Shmistogram for one data set and method.
+        
+        Args:
+            data: Data set to test.
+            method: Binning method to test.
+        """
         t0 = time()
         shm = Shmistogram(data, binner=self.get_binner_method(method))
         return {"shm": shm, "time": time() - t0, "n_bins": shm.bins.shape[0]}
 
     def build(self):
+        """Build the Shmistograms for all data sets and methods."""
         self.trees = {m: [self.build_one(data, m) for idx, data in self.datas.items()] for m in self.bin_methods}
 
     def metrics(self, method):
+        """Get the metrics for the given method."""
         return pd.DataFrame(
             {
                 "k": range(1, len(self.datas) + 1),
@@ -38,6 +57,7 @@ class ScalabilityTesting:
         )
 
     def plot(self, target, log=False):
+        """Plot the metrics for the given target."""
         ax = plt.subplot()
         for m in self.bin_methods:
             df = self.metrics(m).rename({target: m}, axis=1)

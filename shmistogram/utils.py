@@ -1,7 +1,10 @@
+"""Utility functions for the Shmistogram package."""
+
 from time import time
 
 
 def say_time_since(timestamp, task=""):
+    """Summarize the time since a timestamp."""
     delta = time() - timestamp
     print(task + " seconds elapsed: %.2f seconds" % delta)
 

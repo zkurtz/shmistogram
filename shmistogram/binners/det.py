@@ -1,14 +1,14 @@
-import numpy as np
-import pandas as pd
 import warnings
 
-from ..utils import ClassUtils
+import numpy as np
+import pandas as pd
+
+from shmistogram.utils import ClassUtils
 
 
 def default_params():
-    """
-    :param max_bins: hard upper bound on the number of bins in the continuous component
-        of the shmistogram
+    """:param max_bins: hard upper bound on the number of bins in the continuous component
+    of the shmistogram
     """
     return {"n_bins": None, "max_bins": np.inf, "min_data_in_leaf": int(3), "lambda": 1, "verbose": False}
 
@@ -47,13 +47,12 @@ def isclose(a, b, rel_tol=1e-12, abs_tol=0.0):
 
 
 def _search_split(df, lb=None, ub=None, min_data_in_leaf=None):
-    """
-    Search for an optimal split (index and threshold value)
+    """Search for an optimal split (index and threshold value)
     :param df: (pd.DataFrame) the index should be the unique values and the the `n_obs` column
     is the count observations at each value
     :param lb: (float) a left interval bound, which may be slightly less than the minimum df.index.value
     :param ub: (float) a left interval bound, which may be slightly less than the minimum df.index.value
-    :return: {'idx': idx, 'threshold': t, 'divergence_improvement': ??}
+    :return: {'idx': idx, 'threshold': t, 'divergence_improvement': ??}.
     """
     n = df.n_obs.sum()  # df.shape[0]
     assert n > 1
@@ -134,8 +133,7 @@ def _search_split(df, lb=None, ub=None, min_data_in_leaf=None):
 
 class Node(object):
     def __init__(self, lb, ub):
-        """
-        :param lb: (dict) of form {'idx': <int>, 'value': <float>}
+        """:param lb: (dict) of form {'idx': <int>, 'value': <float>}
         :param ub: (dict) of form {'idx': <int>, 'value': <float>}
         #:param neighbors: (dict) of form {'left': <Node>, 'right', <Node>
         """
@@ -148,15 +146,13 @@ class Node(object):
         self.right = None
 
     def split(self, threshold):
-        """
-        :param threshold: (dict) of form {'idx': <int>, 'value': <float>}
-        """
+        """:param threshold: (dict) of form {'idx': <int>, 'value': <float>}"""
         self.left = Node(lb=self.lb, ub=threshold)
         self.right = Node(lb=threshold, ub=self.ub)
 
 
 class DensityEstimationTree(ClassUtils):
-    """Univariate density estimation with a binary tree"""
+    """Univariate density estimation with a binary tree."""
 
     def __init__(self, params=None):
         self.params = accept_params(params)
@@ -179,9 +175,8 @@ class DensityEstimationTree(ClassUtils):
         self.leaves = pd.DataFrame(splt, index=[0])
 
     def _continue_splitting(self):
-        """
-        - Decide whether to split again
-        - If so, define the best node to split on
+        """- Decide whether to split again
+        - If so, define the best node to split on.
         """
         # Identify best node to split on
         self.leaves.sort_values("deviance_improvement", inplace=True)
@@ -267,7 +262,7 @@ class DensityEstimationTree(ClassUtils):
         return self._bins()
 
     def _bins(self):
-        """Identify all leaf bins in ascending order"""
+        """Identify all leaf bins in ascending order."""
         if self.N == 0:
             return pd.DataFrame({"lb": [], "ub": [], "freq": [], "width": [], "rate": []})
         lnodes = self.leaves.index.values

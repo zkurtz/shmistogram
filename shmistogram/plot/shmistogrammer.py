@@ -1,9 +1,9 @@
+
+import numpy as np
+import pandas as pd
 from matplotlib import collections as mc
 from matplotlib import pyplot as plt
 from matplotlib.patches import Rectangle
-import numpy as np
-import pandas as pd
-import pdb
 
 # Config
 LEGEND_SPACE = 0.03

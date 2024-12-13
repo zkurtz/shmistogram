@@ -2,6 +2,7 @@ import matplotlib
 
 matplotlib.use("TkAgg")
 import numpy as np
+
 import shmistogram as sh
 
 # Simulate a mixture of a uniform distribution mixed with a few point masses

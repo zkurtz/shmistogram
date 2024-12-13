@@ -1,9 +1,9 @@
-from astropy import stats
+
 import numpy as np
 import pandas as pd
-import pdb
+from astropy import stats
 
-from ..utils import ClassUtils
+from shmistogram.utils import ClassUtils
 
 
 def default_params():
@@ -11,8 +11,7 @@ def default_params():
 
 
 class BayesianBlocks(ClassUtils):
-    """
-    Compute a Bayesian block representation
+    """Compute a Bayesian block representation.
 
     :param params: Keyword args to be passed to astropy.stats.bayesian_blocks. Pass any of the arguments specified
     in [the documentation ](http://docs.astropy.org/en/stable/api/astropy.stats.bayesian_blocks.html)

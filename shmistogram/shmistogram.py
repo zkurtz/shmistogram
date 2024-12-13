@@ -1,16 +1,14 @@
-from matplotlib import pyplot as plt
 import numpy as np
+from matplotlib import pyplot as plt
 
-from . import binners
-from .utils import ClassUtils
-from .tabulation import SeriesTable
-from . import plot
+from shmistogram import binners, plot
+from shmistogram.tabulation import SeriesTable
+from shmistogram.utils import ClassUtils
 
 
 class Shmistogram(ClassUtils):
     def __init__(self, x, binner=None, loner_min_count=None, verbose=False):
-        """
-        :param x: series-like object (pandas.Series, numpy 1-d array, flat list)
+        """:param x: series-like object (pandas.Series, numpy 1-d array, flat list)
         :param binner: An instance of a binning class with a fit() method, or None
         :param loner_min_count: Observations with a frequency of at least `loner_min_count` are
         eligible to be considered 'loners'
@@ -53,10 +51,9 @@ class Shmistogram(ClassUtils):
             self.loner_min_count = loner_min_count
 
     def _tabulate_loners_and_the_crowd(self, st):
-        """
-        Break observations into 'loners' and the 'crowd'. The total distribution
+        """Break observations into 'loners' and the 'crowd'. The total distribution
         will be a mixture between a multinomial (for the loners) and
-        a piecewise uniform distribution (for the crowd)
+        a piecewise uniform distribution (for the crowd).
 
         :param st: (SeriesTable)
         """
@@ -75,7 +72,7 @@ class Shmistogram(ClassUtils):
         self.loner_crowd_shares = np.array([self.loners.n, self.crowd.n]) / self.n_obs
 
     def plot(self, ax=None, name="values", outfile=None, show=False):
-        """Plot the bins, loners, and nulls"""
+        """Plot the bins, loners, and nulls."""
         plotter = plot.ShmistoGrammer(
             bins=self.bins, loners=self.loners.df, loner_crowd_shares=self.loner_crowd_shares, name=name
         )

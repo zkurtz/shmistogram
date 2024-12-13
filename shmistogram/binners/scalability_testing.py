@@ -1,12 +1,11 @@
-from matplotlib import pyplot as plt
-import numpy as np
-import pandas as pd
 from time import time
 
-from .agglomerate import Agglomerator
-from .bayesblocks import BayesianBlocks
-from .det import DensityEstimationTree
-from ..shmistogram import Shmistogram
+import numpy as np
+import pandas as pd
+from matplotlib import pyplot as plt
+
+from shmistogram.binners.bayesblocks import BayesianBlocks
+from shmistogram.shmistogram import Shmistogram
 
 
 class ScalabilityTesting:

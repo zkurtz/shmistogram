@@ -1,4 +1,5 @@
 from copy import deepcopy
+
 import numpy as np
 import pandas as pd
 
@@ -25,7 +26,7 @@ class SeriesTable(object):
         assert self.df[~np.isnan(self.df.index)].index.is_monotonic_increasing
 
     def select(self, idxs):
-        """Return a copy of self that includes only a subset of the values"""
+        """Return a copy of self that includes only a subset of the values."""
         st = deepcopy(self)
         st.df = self.df.loc[idxs]
         st.n = st.df.n_obs.sum()

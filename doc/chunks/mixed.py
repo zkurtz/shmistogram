@@ -1,8 +1,9 @@
 import matplotlib
 
 matplotlib.use("Agg")
-from matplotlib import pyplot as plt
 import numpy as np
+from matplotlib import pyplot as plt
+
 import shmistogram as sh
 
 # Simulate a mixture of a uniform distribution mixed with a few point masses

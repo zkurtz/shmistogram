@@ -3,7 +3,7 @@ from scipy import stats
 
 
 def cauchy_mixture(n=4500, truncate=True, seed=0):
-    """Simulate a mixture of Cauchy distributions
+    """Simulate a mixture of Cauchy distributions.
 
     :param n: (int) Approximate sample size. The actual sample size may be less if
     truncate is True (the default)

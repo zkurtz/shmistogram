@@ -1,15 +1,13 @@
+
 import numpy as np
 import pandas as pd
 from scipy import stats
 
-import pdb
-
-from ..utils import ClassUtils
+from shmistogram.utils import ClassUtils
 
 
 def default_params():
-    """
-    :param n_bins: hard upper bound on the number of bins in the continuous component
+    """:param n_bins: hard upper bound on the number of bins in the continuous component
         of the shmistogram
     :param prebin_maxbins: (int) pre-bin the points as you would in a standard
         histogram with at most `prebin_maxbins` bins to limit the computational cost
@@ -43,7 +41,7 @@ def rate_similarity(n1, w1, n2, w2):
 
 def forward_merge_score(bins):
     """A heuristic score of the relative suitability of a merge for every
-    bin with its right-side neighbor
+    bin with its right-side neighbor.
 
     Combines several preference-for-merging factors:
     - rate sameness: bins that share approximately the same height should be
@@ -74,8 +72,7 @@ def forward_merge_score(bins):
 
 
 def collapse_one(bins, k):
-    """
-    :param bins: (pandas.DataFrame) contains columns 'freq', 'width', and 'rate';
+    """:param bins: (pandas.DataFrame) contains columns 'freq', 'width', and 'rate';
     each row is a bin
     :param k: Index of row to collapse with (k+1)th row
     :return: same as bins but one fewer row due to collapsing

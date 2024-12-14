@@ -33,7 +33,7 @@ shm.plot(ax=axes[1], name='mixed data')
 fig.tight_layout()
 ```
 
-![](doc/chunks/mixed.png?raw=true "title")
+![](doc/comparison.png?raw=true "title")
 
 The histogram obscures the point masses somewhat and says nothing about missing values. 
 By contrast, the shmistogram uses red line segments to emphasize the point masses, and

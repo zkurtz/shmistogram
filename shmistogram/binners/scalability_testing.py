@@ -40,7 +40,12 @@ class ScalabilityTesting:
         """
         t0 = time()
         shm = Shmistogram(data, binner=self.get_binner_method(method))
-        return {"shm": shm, "time": time() - t0, "n_bins": shm.bins.shape[0]}
+        assert isinstance(shm.bins, pd.DataFrame), "Bins should be a DataFrame."
+        return {
+            "shm": shm,
+            "time": time() - t0,
+            "n_bins": shm.bins.shape[0],
+        }
 
     def build(self):
         """Build the Shmistograms for all data sets and methods."""

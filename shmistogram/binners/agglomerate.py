@@ -84,7 +84,14 @@ def collapse_one(bins, k):
     """
     # Here 'dfm' stands for 2-row Data Frame to be Merged
     dfm = bins.iloc[k : k + 2]
-    df = pd.DataFrame({"freq": dfm.freq.sum(), "lb": dfm.lb.values[0], "ub": dfm.ub.values[-1]}, index=[0])
+    df = pd.DataFrame(
+        {
+            "freq": [dfm.freq.sum()],
+            "lb": [dfm.lb.values[0]],
+            "ub": [dfm.ub.values[-1]],
+        },
+        index=pd.RangeIndex(1),
+    )
     assert (df.ub - df.lb).min() > 0
     df["width"] = df.ub - df.lb
     df["rate"] = df.freq / df.width
@@ -138,7 +145,7 @@ class Agglomerator(ClassUtils):
             return pd.DataFrame({"freq": [], "lb": [], "ub": [], "width": [], "rate": []})
         prebin_maxbins = min(nc, self.params["prebin_maxbins"])
         bin_idxs = np.array_split(np.arange(nc), prebin_maxbins)
-        bins = pd.DataFrame([self._bin_init(xs) for xs in bin_idxs])
+        bins = pd.DataFrame([self._bin_init(xs.tolist()) for xs in bin_idxs])
         gap_margin = (bins.lb.values[1:] - bins.ub.values[:-1]) / 2
         cuts = (bins.lb.values[1:] - gap_margin).tolist()
         bins.lb = [bins.lb.values[0]] + cuts

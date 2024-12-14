@@ -187,7 +187,7 @@ class DensityEstimationTree(ClassUtils):
         self.nodes = {self.last_node_idx: self.root}
         mdil = self.params["min_data_in_leaf"]
         splt = _search_split(self.df.copy(), min_data_in_leaf=mdil)
-        self.leaves = pd.DataFrame(splt, index=[0])
+        self.leaves = pd.DataFrame(splt, index=pd.RangeIndex(1))
 
     def _continue_splitting(self):
         """Decide whether to split again.
@@ -254,6 +254,8 @@ class DensityEstimationTree(ClassUtils):
             nl = node.left
             nr = node.right
             i = self.last_node_idx
+            assert nl is not None, "left child is None"
+            assert nr is not None, "right child is None"
             self.nodes[i + 1] = nl
             self.nodes[i + 2] = nr
             # precompute the new leaves' best split points

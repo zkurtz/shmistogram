@@ -9,8 +9,10 @@ def say_time_since(timestamp, task=""):
     print(task + " seconds elapsed: %.2f seconds" % delta)
 
 
-class ClassUtils(object):
-    """Basic methods accessible by class inheritance."""
+class ClassUtils:
+    """Basic methods useful in many classes."""
+
+    verbose: bool
 
     def vp(self, string):
         """Verbose print."""

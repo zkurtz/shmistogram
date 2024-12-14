@@ -72,8 +72,12 @@ class ShmistoGrammer:
     def _bins(self):
         assert isinstance(self.bins, pd.DataFrame), "Bins must be a DataFrame"
         edges = self._bin_edges()
-        rates = self.bins[RATE].values
-        self.ax.fill_between(edges.repeat(2)[1:-1], np.asarray(rates).repeat(2), facecolor=self.colors["crowd"])
+        rates = self.bins[RATE].to_numpy()
+        self.ax.fill_between(
+            edges.repeat(2)[1:-1],
+            np.asarray(rates).repeat(2),
+            facecolor=self.colors["crowd"],
+        )
 
     def _count_types(self):
         assert isinstance(self.bins, pd.DataFrame), "Bins must be a DataFrame"
@@ -136,7 +140,13 @@ class ShmistoGrammer:
         lines = [[(idx, 0), (idx, row.n_obs)] for idx, row in self.loners.iterrows()]
         lc = mc.LineCollection(lines, colors=self.colors["loner"], linewidths=0.6)
         axl.add_collection(lc)
-        axl.plot(self.loners.index.values, self.loners.n_obs.values, "or", color=self.colors["loner"], markersize=3)
+        axl.plot(
+            self.loners.index.values,
+            self.loners.n_obs.values,
+            marker="o",
+            color=self.colors["loner"],
+            markersize=3,
+        )
 
     def plot(self, ax=None, show=False, title="Shmistogram"):
         """Plot the Shmistogram.

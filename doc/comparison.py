@@ -1,4 +1,7 @@
-"""Generate a figure comparing a standard histogram to a shmistogram for mixed data."""
+"""Generate a figure comparing a standard histogram to a shmistogram for mixed data.
+
+Run as python doc/comparison.py.
+"""
 
 import matplotlib
 
@@ -26,4 +29,4 @@ shm = sh.Shmistogram(data)
 shm.plot(ax=axes[1], name="mixed data")
 
 fig.tight_layout()
-fig.savefig("mixed.png")
+fig.savefig("comparison.png")

@@ -10,10 +10,10 @@ from shmistogram.utils import ClassUtils
 
 class Shmistogram(ClassUtils):
     """Shmistogram class for creating a histogram-like plot with loners and the crowd."""
-    
+
     def __init__(self, x, binner=None, loner_min_count=None, verbose=False):
         """Initialize a Shmistogram object.
-        
+
         :param x: series-like object (pandas.Series, numpy 1-d array, flat list)
         :param binner: An instance of a binning class with a fit() method, or None
         :param loner_min_count: Observations with a frequency of at least `loner_min_count` are
@@ -58,7 +58,7 @@ class Shmistogram(ClassUtils):
 
     def _tabulate_loners_and_the_crowd(self, st):
         """Break observations into 'loners' and the 'crowd'.
-        
+
         The total distribution will be a mixture between a multinomial (for the loners) and
         a piecewise uniform distribution (for the crowd).
 

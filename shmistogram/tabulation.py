@@ -11,7 +11,7 @@ class SeriesTable(object):
 
     def __init__(self, series, compute_empirical_p=False):
         """Create a table of counts for a series.
-        
+
         Args:
             series: The series to tabulate.
             compute_empirical_p: If True, compute the empirical probability of each value.

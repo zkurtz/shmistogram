@@ -10,7 +10,7 @@ from shmistogram.utils import ClassUtils
 
 def default_params():
     """Default parameters for the DensityEstimationTree.
-    
+
     Note that max_bins is hard upper bound on the number of bins in the continuous component of the shmistogram.
     """
     return {"n_bins": None, "max_bins": np.inf, "min_data_in_leaf": int(3), "lambda": 1, "verbose": False}
@@ -143,7 +143,7 @@ class Node(object):
 
     def __init__(self, lb, ub):
         """Initialize the node.
-        
+
         :param lb: (dict) of form {'idx': <int>, 'value': <float>}
         :param ub: (dict) of form {'idx': <int>, 'value': <float>}
         #:param neighbors: (dict) of form {'left': <Node>, 'right', <Node>
@@ -158,7 +158,7 @@ class Node(object):
 
     def split(self, threshold):
         """Split the node into two children.
-        
+
         :param threshold: (dict) of form {'idx': <int>, 'value': <float>}
         """
         self.left = Node(lb=self.lb, ub=threshold)

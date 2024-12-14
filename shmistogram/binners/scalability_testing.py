@@ -12,10 +12,10 @@ from shmistogram.shmistogram import Shmistogram
 
 class ScalabilityTesting:
     """Class to test the scalability of the Bayesian Blocks algorithm."""
-    
+
     def __init__(self, data_sets, bin_methods):
         """Initialize the class with the data sets and binning methods.
-        
+
         Args:
             data_sets: Dictionary of data sets to test.
             bin_methods: List of binning methods to test.
@@ -33,7 +33,7 @@ class ScalabilityTesting:
 
     def build_one(self, data, method):
         """Build the Shmistogram for one data set and method.
-        
+
         Args:
             data: Data set to test.
             method: Binning method to test.

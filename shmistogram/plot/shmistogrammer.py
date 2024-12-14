@@ -26,7 +26,7 @@ class ShmistoGrammer:
         color_null="black",
     ):
         """Initialize a ShmistoGrammer object.
-        
+
         Args:
             loner_crowd_shares: A tuple of the form (loner_share, crowd_share)
             bins: A DataFrame with columns ['lb', 'ub', 'freq', 'rate']

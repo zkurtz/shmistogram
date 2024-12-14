@@ -9,7 +9,7 @@ from shmistogram.utils import ClassUtils
 
 def default_params():
     """Return a dictionary of default parameters for the Agglomerator.
-    
+
     :param n_bins: hard upper bound on the number of bins in the continuous component
         of the shmistogram
     :param prebin_maxbins: (int) pre-bin the points as you would in a standard
@@ -27,7 +27,7 @@ def rate_similarity(n1, w1, n2, w2):
     :param w2: Width of second bin
     :return: An estimate of the statistical significance of the difference in empirical
     height (or 'rate') between the two bins
-    
+
     Returns: a p-value adjusted for small sample size.
     """
     n_trials = n1 + n2

@@ -11,6 +11,10 @@ LEGEND_SPACE = 0.03
 LEGEND_MARG = 0.02
 LEGEND_SEP = 0.025
 
+LB = "lb"
+FREQ = "freq"
+RATE = "rate"
+
 
 class ShmistoGrammer:
     """Generate a Shmistogram plot from a Shmistogram object."""
@@ -60,40 +64,54 @@ class ShmistoGrammer:
         self.null = loners[np.isnan(loners.index)].n_obs.sum()
 
     def _bin_edges(self):
-        le = self.bins.lb.values
-        re = np.array([self.bins.ub.values[-1]])
+        assert isinstance(self.bins, pd.DataFrame), "Bins must be a DataFrame"
+        le = self.bins[LB].to_numpy()
+        re = np.array([self.bins.ub.to_numpy()[-1]])
         return np.concatenate((le, re))
 
     def _bins(self):
+        assert isinstance(self.bins, pd.DataFrame), "Bins must be a DataFrame"
         edges = self._bin_edges()
-        rates = self.bins.rate.values
-        self.ax.fill_between(edges.repeat(2)[1:-1], rates.repeat(2), facecolor=self.colors["crowd"])
+        rates = self.bins[RATE].values
+        self.ax.fill_between(edges.repeat(2)[1:-1], np.asarray(rates).repeat(2), facecolor=self.colors["crowd"])
 
     def _count_types(self):
+        assert isinstance(self.bins, pd.DataFrame), "Bins must be a DataFrame"
         return pd.Series(
-            {"crowd": self.bins.freq.sum(), "loner": self.loners.n_obs.sum(), "null": self.null}
+            {
+                "crowd": self.bins[FREQ].sum(),
+                "loner": self.loners.n_obs.sum(),
+                "null": self.null,
+            }
         ).sort_values()
 
     def _append_legend_bar(self):
         counts = self._count_types()
         cmax = counts.max()
         # stretch y axis to make space for legend
-        ymax = self.bins.rate.max()
+        assert isinstance(self.bins, pd.DataFrame), "Bins must be a DataFrame"
+        ymax = self.bins[RATE].max()
         N = len(counts)
         ymarg = ymax * (LEGEND_MARG + N * LEGEND_SPACE + (N - 1) * LEGEND_SEP)
         ysep = ymax * LEGEND_SEP
         self.ax.set_ylim(0, ymax + ymarg)
         # orient legent w.r.t. horizontal axis
-        xmin = self.bins.lb.values[0]
+        xmin = self.bins[LB].values[0]
         xmax = self.bins.ub.values[-1]
         w = xmax - xmin
         lxmin = xmin + w / 4
         ymin = ymax * (1 + LEGEND_MARG)
         # iterate over the counts, putting each one on the plot
         for grp in counts.index:
+            assert isinstance(grp, str), "Group names must be strings"
             bar_len = (0.7 * w * counts[grp]) / cmax
             bar_height = LEGEND_SPACE * ymax
-            rect = Rectangle((lxmin, ymin), bar_len, bar_height, facecolor=self.colors[grp])
+            rect = Rectangle(
+                (lxmin, ymin),
+                bar_len,
+                bar_height,
+                facecolor=self.colors[grp],
+            )
             self.ax.text(
                 lxmin, ymin - ysep / 3, grp + ": ", horizontalalignment="right", verticalalignment="bottom", fontsize=10
             )
@@ -128,6 +146,7 @@ class ShmistoGrammer:
             show: Whether to show the plot
             title: The title of the plot
         """
+        assert isinstance(self.bins, pd.DataFrame), "Bins must be a DataFrame"
         if self.bins.shape[0] == 0:
             print("This data is 100% loners:")
             print(self.loners)

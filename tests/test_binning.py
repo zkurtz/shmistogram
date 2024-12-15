@@ -4,6 +4,10 @@ matplotlib.use("Agg")
 import pandas as pd
 
 import shmistogram as shm
+from shmistogram.binners.det import DensityEstimationTree
+
+# from shmistogram.simulations import univariate
+from shmistogram.simulations.univariate import cauchy_mixture
 
 
 def test_version():
@@ -17,9 +21,9 @@ def test_det_n_bin():
     in each bin
     """
     N = 10
-    data = shm.simulations.cauchy_mixture(n=N, truncate=False, seed=0)
+    data = cauchy_mixture(n=N, truncate=False, seed=0)
     assert data.shape[0] == N
-    binner = shm.binners.DensityEstimationTree(params={"n_bins": N, "min_data_in_leaf": 1})
+    binner = DensityEstimationTree(params={"n_bins": N, "min_data_in_leaf": 1})
     det = shm.Shmistogram(data, binner=binner)
     assert isinstance(det.bins, pd.DataFrame), "Bins must be a DataFrame"
     assert det.bins.shape[0] == N

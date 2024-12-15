@@ -1,2 +1,0 @@
-from shmistogram.plot.shmistogrammer import ShmistoGrammer as ShmistoGrammer
-from shmistogram.plot.shmistogrammer import standard_histogram as standard_histogram

@@ -146,6 +146,7 @@ class ShmistoGrammer:
             marker="o",
             color=self.colors["loner"],
             markersize=3,
+            linestyle="None",  # Add this line to remove the connecting line
         )
 
     def plot(self, ax=None, show=False, title="Shmistogram"):

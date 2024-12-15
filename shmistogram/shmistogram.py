@@ -3,7 +3,8 @@
 import numpy as np
 from matplotlib import pyplot as plt
 
-from shmistogram import binners, plot
+from shmistogram.binners.det import DensityEstimationTree
+from shmistogram.plot.shmistogrammer import ShmistoGrammer
 from shmistogram.tabulation import SeriesTable
 from shmistogram.utils import ClassUtils
 
@@ -48,7 +49,7 @@ class Shmistogram(ClassUtils):
         if binner is not None:
             self.binner = binner
         else:
-            self.binner = binners.DensityEstimationTree()
+            self.binner = DensityEstimationTree()
 
     def _set_loner_min_count(self, loner_min_count):
         if loner_min_count is None:
@@ -80,7 +81,7 @@ class Shmistogram(ClassUtils):
 
     def plot(self, ax=None, name="values", outfile=None, show=False):
         """Plot the bins, loners, and nulls."""
-        plotter = plot.ShmistoGrammer(
+        plotter = ShmistoGrammer(
             bins=self.bins, loners=self.loners.df, loner_crowd_shares=self.loner_crowd_shares, name=name
         )
         plotter.plot(ax=ax, show=show)

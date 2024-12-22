@@ -95,9 +95,9 @@ def _search_split(df, lb=None, ub=None, min_data_in_leaf=None):
         df = df[df.right_n + 1 >= m]
         if df.shape[0] < 2:
             return {
-                "deviance_improvement": -np.inf,
-                "idx": None,
-                "value": None,
+                "deviance_improvement": -1,  # negative improvment ensures no more splits
+                "idx": -1,
+                "value": -1.0,
                 "n": n_ob,
             }
     # Drop the final row, as splitting on it would imply a right-leaf size of 0
@@ -204,14 +204,11 @@ class DensityEstimationTree(ClassUtils):
                 return False
             mdil = self.params["min_data_in_leaf"]
             if (target_n_bins is not None) and (mdil is not None):
-                warnings.warn(
-                    "min_data_in_leaf is "
-                    + str(mdil)
-                    + ", which limits the number of bins to "
-                    + str(n_bins)
-                    + " even though you requested n_bin = "
-                    + str(target_n_bins)
+                msg = (
+                    f"min_data_in_leaf is {mdil}, which limits the number of bins to {n_bins} even though you "
+                    "requested n_bin = {target_n_bins}"
                 )
+                warnings.warn(msg)
             else:
                 try:
                     # presumably there is not sufficient data to support another bin
@@ -220,7 +217,9 @@ class DensityEstimationTree(ClassUtils):
                     raise Exception("Terminated for unknown reason") from err
             return False
         self.threshold = {"idx": int(idx), "value": val}
-        self.best_node = self.leaves.index.values[-1]
+        _node_int = self.leaves.index[-1]
+        assert isinstance(_node_int, (int, np.integer)), "best_node_idx is not an integer"
+        self.best_node = int(_node_int)
 
         # Decide whether to continue splitting
         if target_n_bins is not None:
@@ -244,7 +243,12 @@ class DensityEstimationTree(ClassUtils):
         if df.shape[0] > 1:
             return _search_split(df, lb=node.lb["value"], ub=node.ub["value"], min_data_in_leaf=mdil)
         else:
-            return {"deviance_improvement": -1, "idx": None, "value": None, "n": df.n_obs.values[0]}
+            return {
+                "deviance_improvement": -1,  # negative improvment ensures no more splits
+                "idx": -1,
+                "value": -1.0,
+                "n": df.n_obs.values[0],
+            }
 
     def _grow_the_tree(self):
         while self._continue_splitting():
@@ -260,13 +264,15 @@ class DensityEstimationTree(ClassUtils):
             # precompute the new leaves' best split points
             snl = self._search_split(nl)
             snr = self._search_split(nr)
-            # TODO: recover assertion?
-            # assert snr['idx'] not in self.leaves.idx.values
-            # assert snl['idx'] not in self.leaves.idx.values
-            self.leaves = self.leaves.drop([self.best_node], axis=0)
+            indexes = set(self.leaves.idx)
+            if snr["idx"] is not None and snr["idx"] > 0:
+                assert snr["idx"] not in indexes
+            if snl["idx"] is not None and snl["idx"] > 0:
+                assert snl["idx"] not in indexes
             # drop the chosen leaf and replace it with its children
-            self.leaves.loc[i + 1] = snl
-            self.leaves.loc[i + 2] = snr
+            self.leaves = self.leaves.drop([self.best_node], axis=0)
+            self.leaves.loc[i + 1] = snl # pyright: ignore
+            self.leaves.loc[i + 2] = snr # pyright: ignore
             assert self.leaves.n.sum() == self.N
             self.last_node_idx += 2
 
@@ -283,11 +289,11 @@ class DensityEstimationTree(ClassUtils):
         """Identify all leaf bins in ascending order."""
         if self.N == 0:
             return pd.DataFrame({"lb": [], "ub": [], "freq": [], "width": [], "rate": []})
-        lnodes = self.leaves.index.values
+        lnodes = self.leaves.index.to_numpy()
         df = pd.DataFrame(
             {"lb": [self.nodes[k].lb["value"] for k in lnodes], "ub": [self.nodes[k].ub["value"] for k in lnodes]}
         )
-        df["freq"] = self.leaves.n.values
+        df["freq"] = self.leaves.n.to_numpy()
         assert (df.ub - df.lb).min() > 0
         df["width"] = df.ub - df.lb
         df["rate"] = df.freq / df.width

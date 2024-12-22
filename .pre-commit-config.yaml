@@ -17,11 +17,11 @@ repos:
       name: formatting (ruff)
       entry: ruff
       language: system
-      types: [python]
+      types: [python, jupyter]
       args: ['format']
     - id: ruff-lint
       name: linting (ruff)
       entry: ruff
       language: system
-      types: [python]
+      types: [python, jupyter]
       args: ['check', '--fix', '--force-exclude']

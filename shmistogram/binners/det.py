@@ -194,8 +194,7 @@ class DensityEstimationTree(ClassUtils):
 
         If so, define the best node to split on.
         """
-        # Identify best node to split on
-        self.leaves.sort_values("deviance_improvement", inplace=True)
+        self.leaves = self.leaves.sort_values("deviance_improvement")
         idx = self.leaves.idx.iloc[-1]
         val = self.leaves.value.iloc[-1]
         target_n_bins = self.params["n_bins"]
@@ -264,7 +263,7 @@ class DensityEstimationTree(ClassUtils):
             # TODO: recover assertion?
             # assert snr['idx'] not in self.leaves.idx.values
             # assert snl['idx'] not in self.leaves.idx.values
-            self.leaves.drop([self.best_node], inplace=True)
+            self.leaves = self.leaves.drop([self.best_node], axis=0)
             # drop the chosen leaf and replace it with its children
             self.leaves.loc[i + 1] = snl
             self.leaves.loc[i + 2] = snr

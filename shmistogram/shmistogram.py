@@ -5,7 +5,7 @@ from matplotlib import pyplot as plt
 
 from shmistogram.binners.det import DensityEstimationTree
 from shmistogram.plot.shmistogrammer import ShmistoGrammer
-from shmistogram.tabulation import SeriesTable
+from shmistogram.tabulation import SeriesTable, tabulate
 from shmistogram.utils import ClassUtils
 
 IS_LONER = "is_loner"
@@ -29,7 +29,7 @@ class Shmistogram(ClassUtils):
 
         # Tabulation
         t0 = self.timer()
-        series_table = SeriesTable(x)
+        series_table = tabulate(x)
         self._tabulate_loners_and_the_crowd(series_table)
         self.n_loners = self.loners.n
         self.timer(t0, task="tabulation")
@@ -59,15 +59,15 @@ class Shmistogram(ClassUtils):
         else:
             self.loner_min_count = loner_min_count
 
-    def _tabulate_loners_and_the_crowd(self, st):
+    def _tabulate_loners_and_the_crowd(self, st: SeriesTable) -> None:
         """Break observations into 'loners' and the 'crowd'.
 
         The total distribution will be a mixture between a multinomial (for the loners) and
         a piecewise uniform distribution (for the crowd).
 
-        :param st: (SeriesTable)
+        Args:
+            st: A series table
         """
-        assert isinstance(st, SeriesTable)
         xdf = st.df.copy()
         xdf["count"] = xdf["n_obs"]
         xdf[IS_LONER] = (xdf["count"] >= self.loner_min_count) | np.isnan(xdf.index.values)

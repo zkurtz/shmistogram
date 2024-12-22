@@ -1,13 +1,16 @@
 # shmistogram
 
-The shmistogram is a better histogram. Key differences include
+Shmistograms are generalizations of histograms that emphasize
 
-- emphasizing singular modalities (i.e. point masses) with a separate multinomial distribution
-- estimating density with better accuracy and fewer bins than a histogram
-by hierarchically grouping points into variable-width bins
+- singular modalities (i.e. point masses), when they exist, as well as null values.
+- accurate estimation, viewing the histogram as a 1-D density estimator
+- removing the usual constraint that all bins be of the same width, allowing visualization of higher fidelity with fewer bins.
 
-Suppose we simulate draws from a triangular distribution (the 'crowd'),
-supplemented with a couple of mode points ('loners'), and some null values:
+The package also includes a variety of 1-D data summarization tools.
+
+## Example
+
+Let's simulate draws from a triangular distribution (the 'crowd'), supplemented with a couple of mode points ('loners'), and some null values:
 
 ```python
 from matplotlib import pyplot as plt
@@ -35,18 +38,16 @@ fig.tight_layout()
 
 ![](doc/comparison.png?raw=true "title")
 
-The histogram obscures the point masses somewhat and says nothing about missing values.
-By contrast, the shmistogram uses red line segments to emphasize the point masses, and
-the legend bar highlights the relative portions of the data in the crowd versus
+The histogram obscures the point masses somewhat and says nothing about missing values. By contrast, the shmistogram uses red line segments to emphasize the point masses, and the legend bar highlights the relative portions of the data in the crowd versus
 the point masses versus the null values.
 
 ## Installation
 
-`pip install shmistogram`
+We're [on pypi](https://pypi.org/project/shmistogram/), so `pip install shmistogram`.
 
 Test your installation by running [demo.py](demo/demo.py)
 
-For the development version, `pip install git+https://github.com/zkurtz/shmistogram.git#egg=shmistogram`
+Consider using the [simplest-possible virtual environment](https://gist.github.com/zkurtz/4c61572b03e667a7596a607706463543) if working directly on this repo.
 
 
 ## Details

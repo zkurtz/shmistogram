@@ -271,8 +271,8 @@ class DensityEstimationTree(ClassUtils):
                 assert snl["idx"] not in indexes
             # drop the chosen leaf and replace it with its children
             self.leaves = self.leaves.drop([self.best_node], axis=0)
-            self.leaves.loc[i + 1] = snl # pyright: ignore
-            self.leaves.loc[i + 2] = snr # pyright: ignore
+            self.leaves.loc[i + 1] = snl  # pyright: ignore
+            self.leaves.loc[i + 2] = snr  # pyright: ignore
             assert self.leaves.n.sum() == self.N
             self.last_node_idx += 2
 

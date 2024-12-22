@@ -8,6 +8,8 @@ from shmistogram.plot.shmistogrammer import ShmistoGrammer
 from shmistogram.tabulation import SeriesTable
 from shmistogram.utils import ClassUtils
 
+IS_LONER = "is_loner"
+
 
 class Shmistogram(ClassUtils):
     """Shmistogram class for creating a histogram-like plot with loners and the crowd."""
@@ -68,12 +70,12 @@ class Shmistogram(ClassUtils):
         assert isinstance(st, SeriesTable)
         xdf = st.df.copy()
         xdf["count"] = xdf["n_obs"]
-        xdf["is_loner"] = (xdf["count"] >= self.loner_min_count) | np.isnan(xdf.index.values)
-        if xdf.shape[0] - xdf.is_loner.sum() == 1:
+        xdf[IS_LONER] = (xdf["count"] >= self.loner_min_count) | np.isnan(xdf.index.values)
+        if xdf.shape[0] - xdf[IS_LONER].sum() == 1:
             # If there is only one non-loner, let's call it a loner too
-            xdf.is_loner.replace(False, True, inplace=True)
-        which_loners = xdf[xdf.is_loner].index.tolist()
-        which_crowd = xdf[~xdf.is_loner].index.tolist()
+            xdf[IS_LONER] = xdf[IS_LONER].replace(False, True)
+        which_loners = xdf.loc[xdf[IS_LONER]].index.tolist()
+        which_crowd = xdf.loc[~xdf[IS_LONER]].index.tolist()
         self.loners = st.select(which_loners)
         self.crowd = st.select(which_crowd)
         assert self.loners.df.n_obs.sum() + self.crowd.df.n_obs.sum() == st.df.n_obs.sum()

@@ -138,7 +138,7 @@ def _search_split(df, lb=None, ub=None, min_data_in_leaf=None):
     return ret
 
 
-class Node(object):
+class Node:
     """Node in a binary tree for density estimation."""
 
     def __init__(self, lb, ub):

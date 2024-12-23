@@ -1,6 +1,7 @@
 """Shmistogram class for creating a histogram-like plot with loners and the crowd."""
 
 import numpy as np
+import pandas as pd
 from matplotlib import pyplot as plt
 
 from shmistogram.binners.det import DensityEstimationTree
@@ -70,7 +71,7 @@ class Shmistogram(ClassUtils):
         """
         xdf = st.df.copy()
         xdf["count"] = xdf["n_obs"]
-        xdf[IS_LONER] = (xdf["count"] >= self.loner_min_count) | np.isnan(xdf.index.values)
+        xdf[IS_LONER] = (xdf["count"] >= self.loner_min_count) | pd.isnull(xdf.index)
         if xdf.shape[0] - xdf[IS_LONER].sum() == 1:
             # If there is only one non-loner, let's call it a loner too
             xdf[IS_LONER] = xdf[IS_LONER].replace(False, True)

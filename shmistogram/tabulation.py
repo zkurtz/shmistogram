@@ -67,7 +67,7 @@ def tabulate(data: IterableValues, **kwargs: Any) -> SeriesTable:
     name = getattr(data, "name", None)
     counts = series.value_counts(sort=False, dropna=False)
     df = pd.DataFrame(counts).sort_index()
-    df = df.rename(columns={series.name or "count": N_OBS})
+    df = df.rename(columns={"count": N_OBS})
     return SeriesTable(
         df=df,
         n=len(series),

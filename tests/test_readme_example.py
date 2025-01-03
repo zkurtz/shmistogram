@@ -6,8 +6,8 @@ import shmistogram as sh
 
 def test_readme_example():
     # Simulate a mixture of a uniform distribution mixed with a few point masses
-    np.random.seed(0)
-    crowd = np.random.triangular(-10, -10, 70, size=500)
+    rng = np.random.default_rng(seed=1)
+    crowd = rng.triangular(-10, -10, 70, size=500)
     loners = np.array([0] * 40 + [42] * 20)
     null = np.array([np.nan] * 100)
     data = np.concatenate((crowd, loners, null))

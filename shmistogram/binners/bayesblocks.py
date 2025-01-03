@@ -13,20 +13,23 @@ def default_params():
 
 
 class BayesianBlocks(ClassUtils):
-    """Compute a Bayesian block representation.
+    """Compute a Bayesian block representation."""
 
-    :param params: Keyword args to be passed to astropy.stats.bayesian_blocks. Pass any of the arguments specified
-    in [the documentation ](http://docs.astropy.org/en/stable/api/astropy.stats.bayesian_blocks.html)
-    excluding `t` and `x`.
-    """
+    def __init__(self, params=None, seed: int | None = None) -> None:
+        """Initialize the BayesianBlocks object.
 
-    def __init__(self, params=None):
-        """Initialize the BayesianBlocks object."""
+        Args:
+            params: Dictionary to be passed as keyword args to astropy.stats.bayesian_blocks. Pass any of the arguments
+              specified in the docs (http://docs.astropy.org/en/stable/api/astropy.stats.bayesian_blocks.html)
+              excluding `t` and `x`.
+            seed: Seed for random number generator. Only used if `sample_size` is not None.
+        """
         self.params = default_params()
         if params is not None:
             self.params.update(params)
         self.verbose = self.params.pop("verbose")
         self.sample_size = self.params.pop("sample_size")
+        self.seed = seed
 
     def build_bin_edges(self, df):
         """Build bin edges using Bayesian Blocks."""
@@ -40,7 +43,8 @@ class BayesianBlocks(ClassUtils):
             if self.sample_size > len(vals):
                 bin_edges = stats.bayesian_blocks(vals, **self.params)
             else:
-                svals = np.random.choice(vals, size=self.sample_size, replace=False)
+                rng = np.random.default_rng(seed=self.seed)
+                svals = rng.choice(vals, size=self.sample_size, replace=False)
                 bin_edges = stats.bayesian_blocks(svals, **self.params)
                 bin_edges[0] = df.index.min()
                 bin_edges[-1] = df.index.max()

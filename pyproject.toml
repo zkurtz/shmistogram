@@ -1,22 +1,24 @@
 [project]
 name = "shmistogram"
-version = "0.6.2"
+version = "0.6.3"
 description = "A smarter histogram"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "astropy >=3.1.2",
-    "matplotlib >=3.0.3",
-    "pandas >=0.24.2",
-    "scipy >=1.2.1",
+  "astropy >=3.1.2",
+  "matplotlib >=3.0.3",
+  "pandas >=1.5.0",
+  "scipy >=1.2.1",
 ]
 
 [dependency-groups]
 dev = [
-  "pre-commit >=3.8.0",
-  "pyright >=1.1.378",
-  "ruff >=0.7.4",
-  "pytest >=8.3.2",
+  "pre-commit==4.0.1",
+  "pyright==1.1.391",
+  "ruff==0.8.5",
+  "pytest==8.3.4",
+]
+extras = [
   "jupyter>=1.1.1",
   "ipykernel>=6.29.5",
 ]

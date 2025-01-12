@@ -141,23 +141,3 @@ such as [this](https://gitlab.cern.ch/landerli/density-estimation-trees)
 [detpack_example.R](demo/detpack_example.R) for a simple variable-width binner.
 - [Efficient Density Estimation via Piecewise Polynomial
 Approximation](https://arxiv.org/pdf/1305.3207.pdf).
-
-
-## Disclaimer
-
-This repo is young, has practically no unit tests, and should be expected to change substantially. Use with caution.
-
-## License
-
-This project is licensed under the terms of the MIT license. See LICENSE for additional details.
-
-## Development
-
-```
-git clone git@github.com:zkurtz/shmistogram.git
-cd shmistogram
-pip install uv
-uv sync --group extras
-source .venv/bin/activate
-pre-commit install
-```

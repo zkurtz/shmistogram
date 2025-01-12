@@ -3,10 +3,11 @@
 from time import time
 
 
-def say_time_since(timestamp, task=""):
+def say_time_since(timestamp: float, task: str | None) -> None:
     """Summarize the time since a timestamp."""
     delta = time() - timestamp
-    print(task + " seconds elapsed: %.2f seconds" % delta)
+    task = task or ""
+    print(f"{task} seconds elapsed: {delta}")
 
 
 class ClassUtils:
@@ -19,11 +20,12 @@ class ClassUtils:
         if self.verbose:
             print(string)
 
-    def timer(self, timestamp=None, task=""):
+    def timer(self, timestamp: float | None = None, task: str | None = None) -> float | None:
         """Set a timestamp or return time since a timestamp.
 
-        :param timestamp: (datetime or None) If None, return time(); else summarize the time since timestamp
-        :param task: (str) A description of what is being timed
+        Args:
+            timestamp: If None, return time(); else summarize the time since timestamp
+            task: A description of what is being timed
         """
         if not self.verbose:
             return None

@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 
+from shmistogram.names import COUNT, LB, UB
 from shmistogram.utils import ClassUtils
 
 
@@ -65,10 +66,10 @@ def forward_merge_score(bins):
         ]
     )
     # contribution to mass balance
-    mr = bins.freq.rank(pct=True).values
+    mr = bins.freq.rank(pct=True).to_numpy()
     m = 1 - mr[1:] * mr[:-1]
     # contribution to width balance
-    wr = bins.width.rank(pct=True).values
+    wr = bins.width.rank(pct=True).to_numpy()
     w = 1 - wr[1:] * wr[:-1]
     # combine all 3 scores into one, as an elementwise vector product
     return s * m * w
@@ -87,8 +88,8 @@ def collapse_one(bins, k):
     df = pd.DataFrame(
         {
             "freq": [dfm.freq.sum()],
-            "lb": [dfm.lb.values[0]],
-            "ub": [dfm.ub.values[-1]],
+            LB: [dfm.lb.to_numpy()[0]],
+            UB: [dfm.ub.to_numpy()[-1]],
         },
         index=pd.RangeIndex(1),
     )
@@ -120,7 +121,7 @@ class Agglomerator(ClassUtils):
         Args:
             df: DataFrame with columns 'n_obs' and 'value'
         """
-        self.N = df.n_obs.sum()
+        self.N = df[COUNT].sum()
         self.df = df
         self._bins_init()
         if self.params["n_bins"] is None:
@@ -133,7 +134,7 @@ class Agglomerator(ClassUtils):
 
     def _bin_init(self, xs):
         df = self.df.iloc[xs]
-        stats_dict = {"lb": df.index.min(), "ub": df.index.max(), "freq": df.n_obs.sum()}
+        stats_dict = {LB: df.index.min(), UB: df.index.max(), "freq": df[COUNT].sum()}
         return stats_dict
 
     def _bins_init(self):
@@ -142,14 +143,14 @@ class Agglomerator(ClassUtils):
         #   to non-uniform bin widths)
         nc = self.df.shape[0]
         if nc == 0:
-            return pd.DataFrame({"freq": [], "lb": [], "ub": [], "width": [], "rate": []})
+            return pd.DataFrame({"freq": [], LB: [], UB: [], "width": [], "rate": []})
         prebin_maxbins = min(nc, self.params["prebin_maxbins"])
         bin_idxs = np.array_split(np.arange(nc), prebin_maxbins)
         bins = pd.DataFrame([self._bin_init(xs.tolist()) for xs in bin_idxs])
-        gap_margin = (bins.lb.values[1:] - bins.ub.values[:-1]) / 2
-        cuts = (bins.lb.values[1:] - gap_margin).tolist()
-        bins.lb = [bins.lb.values[0]] + cuts
-        bins.ub = cuts + [bins.ub.values[-1]]
+        gap_margin = (bins.lb.to_numpy()[1:] - bins.ub.to_numpy()[:-1]) / 2
+        cuts = (bins.lb.to_numpy()[1:] - gap_margin).tolist()
+        bins.lb = [bins.lb.to_numpy()[0]] + cuts
+        bins.ub = cuts + [bins.ub.to_numpy()[-1]]
         bins["width"] = bins.ub - bins.lb
         if nc > 1:  # else, nc=1 and the bin has a single value with lb=ub, so width=0
             try:

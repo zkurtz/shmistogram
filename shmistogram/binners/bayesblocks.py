@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 from astropy import stats
 
+from shmistogram.names import COUNT, FREQ, LB, RATE, UB, WIDTH
 from shmistogram.utils import ClassUtils
 
 
@@ -34,7 +35,7 @@ class BayesianBlocks(ClassUtils):
     def build_bin_edges(self, df):
         """Build bin edges using Bayesian Blocks."""
         assert df.shape[0] > 1
-        vals = np.repeat(df.index.values, df.n_obs.values)
+        vals = np.repeat(df.index.to_numpy(), df[COUNT].to_numpy())
         if self.sample_size is None:
             bin_edges = stats.bayesian_blocks(vals, **self.params)
         else:
@@ -59,7 +60,7 @@ class BayesianBlocks(ClassUtils):
     def fit(self, df):
         """Fit the Bayesian Blocks model to the data."""
         bin_edges = self.build_bin_edges(df)
-        bins = pd.DataFrame({"lb": bin_edges[:-1], "ub": bin_edges[1:], "freq": self.counts_per_bin})
-        bins["width"] = bins.ub - bins.lb
-        bins["rate"] = bins.freq / bins.width
+        bins = pd.DataFrame({LB: bin_edges[:-1], UB: bin_edges[1:], FREQ: self.counts_per_bin})
+        bins[WIDTH] = bins.ub - bins.lb
+        bins[RATE] = bins.freq / bins.width
         return bins

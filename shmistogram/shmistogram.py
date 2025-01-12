@@ -3,10 +3,10 @@
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
+from pandahandler.tabulation import Tabulation, tabulate
 
 from shmistogram.binners.det import DensityEstimationTree
 from shmistogram.plot.shmistogrammer import ShmistoGrammer
-from shmistogram.tabulation import SeriesTable, tabulate
 from shmistogram.utils import ClassUtils
 
 IS_LONER = "is_loner"
@@ -30,17 +30,17 @@ class Shmistogram(ClassUtils):
 
         # Tabulation
         t0 = self.timer()
-        series_table = tabulate(x)
-        self._tabulate_loners_and_the_crowd(series_table)
-        self.n_loners = self.loners.n
+        counts = tabulate(x)
+        self._tabulate_loners_and_the_crowd(counts)
+        self.n_loners = self.loners.n_values
         self.timer(t0, task="tabulation")
 
         # Binning
         t0 = self.timer()
-        if self.crowd.df.shape[0] > 1:
-            self.bins = self.binner.fit(self.crowd.df)
+        if self.crowd.n_values > 1:
+            self.bins = self.binner.fit(self.crowd.counts.to_frame())
         else:
-            assert self.crowd.df.shape[0] == 0
+            assert self.crowd.n_values == 0
             self.bins = None
         self.timer(t0, task="binning")
 
@@ -60,32 +60,34 @@ class Shmistogram(ClassUtils):
         else:
             self.loner_min_count = loner_min_count
 
-    def _tabulate_loners_and_the_crowd(self, st: SeriesTable) -> None:
+    def _tabulate_loners_and_the_crowd(self, counts: Tabulation) -> None:
         """Break observations into 'loners' and the 'crowd'.
 
         The total distribution will be a mixture between a multinomial (for the loners) and
         a piecewise uniform distribution (for the crowd).
 
         Args:
-            st: A series table
+            counts: A tabulation of the the data.
         """
-        xdf = st.df.copy()
-        xdf["count"] = xdf["n_obs"]
+        xdf = counts.counts.to_frame()
         xdf[IS_LONER] = (xdf["count"] >= self.loner_min_count) | pd.isnull(xdf.index)
         if xdf.shape[0] - xdf[IS_LONER].sum() == 1:
             # If there is only one non-loner, let's call it a loner too
             xdf[IS_LONER] = xdf[IS_LONER].replace(False, True)
         which_loners = xdf.loc[xdf[IS_LONER]].index.tolist()
         which_crowd = xdf.loc[~xdf[IS_LONER]].index.tolist()
-        self.loners = st.select(which_loners)
-        self.crowd = st.select(which_crowd)
-        assert self.loners.df.n_obs.sum() + self.crowd.df.n_obs.sum() == st.df.n_obs.sum()
-        self.loner_crowd_shares = np.array([self.loners.n, self.crowd.n]) / self.n_obs
+        self.loners = counts.select(which_loners)
+        self.crowd = counts.select(which_crowd)
+        assert self.loners.n_values + self.crowd.n_values == counts.n_values, "counts mismatch!"
+        self.loner_crowd_shares = np.array([self.loners.n_values, self.crowd.n_values]) / self.n_obs
 
     def plot(self, ax=None, name="values", outfile=None, show=False):
         """Plot the bins, loners, and nulls."""
         plotter = ShmistoGrammer(
-            bins=self.bins, loners=self.loners.df, loner_crowd_shares=self.loner_crowd_shares, name=name
+            bins=self.bins,
+            loners=self.loners.counts.to_frame(),
+            loner_crowd_shares=self.loner_crowd_shares,
+            name=name,
         )
         plotter.plot(ax=ax, show=show)
         plt.gcf().subplots_adjust(bottom=0.25)

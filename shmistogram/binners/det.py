@@ -5,6 +5,7 @@ import warnings
 import numpy as np
 import pandas as pd
 
+from shmistogram.names import COUNT, VALUE
 from shmistogram.utils import ClassUtils
 
 
@@ -13,7 +14,13 @@ def default_params():
 
     Note that max_bins is hard upper bound on the number of bins in the continuous component of the shmistogram.
     """
-    return {"n_bins": None, "max_bins": np.inf, "min_data_in_leaf": int(3), "lambda": 1, "verbose": False}
+    return {
+        "n_bins": None,
+        "max_bins": np.inf,
+        "min_data_in_leaf": int(3),
+        "lambda": 1,
+        "verbose": False,
+    }
 
 
 def check_args_expected(args, defaults):
@@ -55,28 +62,31 @@ def isclose(a, b, rel_tol=1e-12, abs_tol=0.0):
 def _search_split(df, lb=None, ub=None, min_data_in_leaf=None):
     """Search for an optimal split (index and threshold value).
 
-    :param df: (pd.DataFrame) the index should be the unique values and the the `n_obs` column
-    is the count observations at each value
-    :param lb: (float) a left interval bound, which may be slightly less than the minimum df.index.value
-    :param ub: (float) a left interval bound, which may be slightly less than the minimum df.index.value
-    :return: {'idx': idx, 'threshold': t, 'divergence_improvement': ??}.
+    Args:
+        df: A DataFrame with columns 'value' and 'n_obs'
+        lb: A lower bound on the domain of the density function
+        ub: An upper bound on the domain of the density function
+        min_data_in_leaf: The minimum number of data points in each leaf node
+
+    Returns:
+        A dictionary with keys 'idx', 'threshold', and 'divergence_improvement'
     """
-    n = df.n_obs.sum()  # df.shape[0]
+    n = df[COUNT].sum()  # df.shape[0]
     assert n > 1
-    n_ob = df.n_obs.sum()
-    xmin = df.value.iloc[0]
-    xmax = df.value.iloc[-1]
+    n_ob = df[COUNT].sum()
+    xmin = df[VALUE].iloc[0]
+    xmax = df[VALUE].iloc[-1]
     xrg = xmax - xmin
     lb = xmin if (lb is None) else lb
     ub = xmax if (ub is None) else ub
     if xmin - lb < 1e-13:
-        lmar = (df.n_obs.iloc[0] / n) * xrg
+        lmar = (df[COUNT].iloc[0] / n) * xrg
         lb = xmin - lmar
     else:
         lmar = xmin - lb
         assert lmar > 0
     if ub - xmax < 1e-13:
-        umar = (df.n_obs.iloc[-1] / n) * xrg
+        umar = (df[COUNT].iloc[-1] / n) * xrg
         ub = xmax + umar
     else:
         umar = ub - xmax
@@ -86,8 +96,8 @@ def _search_split(df, lb=None, ub=None, min_data_in_leaf=None):
     assert isclose(mxrg, ub - lb)
     null_dens = 1 / mxrg
     # Counts to the left and right of each potential split
-    df["left_n"] = df.n_obs.cumsum()
-    df["right_n"] = df.left_n.iloc[-1] - df.left_n.values
+    df["left_n"] = df[COUNT].cumsum()
+    df["right_n"] = df.left_n.iloc[-1] - df.left_n.to_numpy()
     if min_data_in_leaf is not None:
         m = min_data_in_leaf
         assert m >= 1
@@ -97,21 +107,21 @@ def _search_split(df, lb=None, ub=None, min_data_in_leaf=None):
             return {
                 "deviance_improvement": -1,  # negative improvment ensures no more splits
                 "idx": -1,
-                "value": -1.0,
+                VALUE: -1.0,
                 "n": n_ob,
             }
     # Drop the final row, as splitting on it would imply a right-leaf size of 0
-    value = df.value
+    value = df[VALUE]
     df = df.iloc[:-1]
     # Width of bin to the left, right
-    df["left_w"] = df.value - lb
-    df["right_w"] = ub - df.value
+    df["left_w"] = df[VALUE] - lb
+    df["right_w"] = ub - df[VALUE]
     # Density of bin to the left, right
-    df["left_ldens"] = np.log(df.left_n.values / (n * df.left_w.values))
-    df["right_ldens"] = np.log(df.right_n.values / (n * df.right_w.values))
+    df["left_ldens"] = np.log(df.left_n.to_numpy() / (n * df.left_w.to_numpy()))
+    df["right_ldens"] = np.log(df.right_n.to_numpy() / (n * df.right_w.to_numpy()))
     # Joint negative log likelihood to the left, right
-    df["left_neg_ll"] = -df.left_n.values * df.left_ldens.values
-    df["right_neg_ll"] = -df.right_n.values * df.right_ldens.values
+    df["left_neg_ll"] = -df.left_n.to_numpy() * df.left_ldens.to_numpy()
+    df["right_neg_ll"] = -df.right_n.to_numpy() * df.right_ldens.to_numpy()
     # Total negative log-likelihood; if the total is much less than the global
     #   (null) for a particular split, then the split is worthwhile
     df["neg_ll"] = df.left_neg_ll + df.right_neg_ll
@@ -131,7 +141,7 @@ def _search_split(df, lb=None, ub=None, min_data_in_leaf=None):
         "idx": int(
             idx + 1
         ),  # plus 1 because we want df.iloc[:idx] to include the original idx (to create the left leaf)
-        "value": value,
+        VALUE: value,
         #'n_min': min(df.loc[idx].left_n, df.loc[idx].right_n),
         "n": n_ob,
     }
@@ -175,13 +185,13 @@ class DensityEstimationTree(ClassUtils):
 
     def _accept_data(self, df):
         self.df = df.copy()
-        self.df["value"] = self.df.index.values
+        self.df[VALUE] = self.df.index.to_numpy()
         self.df.index = range(df.shape[0])
 
     def _plant_the_tree(self):
         self.root = Node(
-            lb={"idx": int(0), "value": self.df.value.iloc[0]},
-            ub={"idx": int(self.df.shape[0]), "value": self.df.value.iloc[-1]},
+            lb={"idx": int(0), VALUE: self.df[VALUE].iloc[0]},
+            ub={"idx": int(self.df.shape[0]), VALUE: self.df[VALUE].iloc[-1]},
         )
         self.last_node_idx = 0
         self.nodes = {self.last_node_idx: self.root}
@@ -196,7 +206,7 @@ class DensityEstimationTree(ClassUtils):
         """
         self.leaves = self.leaves.sort_values("deviance_improvement")
         idx = self.leaves.idx.iloc[-1]
-        val = self.leaves.value.iloc[-1]
+        val = self.leaves[VALUE].iloc[-1]
         target_n_bins = self.params["n_bins"]
         n_bins = self.leaves.shape[0]
         if idx is None or np.isnan(idx):
@@ -216,7 +226,7 @@ class DensityEstimationTree(ClassUtils):
                 except Exception as err:
                     raise Exception("Terminated for unknown reason") from err
             return False
-        self.threshold = {"idx": int(idx), "value": val}
+        self.threshold = {"idx": int(idx), VALUE: val}
         _node_int = self.leaves.index[-1]
         assert isinstance(_node_int, (int, np.integer)), "best_node_idx is not an integer"
         self.best_node = int(_node_int)
@@ -241,13 +251,13 @@ class DensityEstimationTree(ClassUtils):
         mdil = self.params["min_data_in_leaf"]
         df = self.df.iloc[node.lb["idx"] : node.ub["idx"]].copy()
         if df.shape[0] > 1:
-            return _search_split(df, lb=node.lb["value"], ub=node.ub["value"], min_data_in_leaf=mdil)
+            return _search_split(df, lb=node.lb[VALUE], ub=node.ub[VALUE], min_data_in_leaf=mdil)
         else:
             return {
                 "deviance_improvement": -1,  # negative improvment ensures no more splits
                 "idx": -1,
-                "value": -1.0,
-                "n": df.n_obs.values[0],
+                VALUE: -1.0,
+                "n": df[COUNT].to_numpy()[0],
             }
 
     def _grow_the_tree(self):
@@ -276,22 +286,22 @@ class DensityEstimationTree(ClassUtils):
             assert self.leaves.n.sum() == self.N
             self.last_node_idx += 2
 
-    def fit(self, df):
+    def fit(self, df: pd.DataFrame):
         """Fit the DensityEstimationTree to the data."""
-        self.N = df.n_obs.sum()
+        self.N = df[COUNT].sum()
         if self.N > 0:
             self._accept_data(df)
             self._plant_the_tree()
             self._grow_the_tree()
         return self._bins()
 
-    def _bins(self):
+    def _bins(self) -> pd.DataFrame:
         """Identify all leaf bins in ascending order."""
         if self.N == 0:
             return pd.DataFrame({"lb": [], "ub": [], "freq": [], "width": [], "rate": []})
         lnodes = self.leaves.index.to_numpy()
         df = pd.DataFrame(
-            {"lb": [self.nodes[k].lb["value"] for k in lnodes], "ub": [self.nodes[k].ub["value"] for k in lnodes]}
+            {"lb": [self.nodes[k].lb[VALUE] for k in lnodes], "ub": [self.nodes[k].ub[VALUE] for k in lnodes]}
         )
         df["freq"] = self.leaves.n.to_numpy()
         assert (df.ub - df.lb).min() > 0

@@ -6,14 +6,12 @@ from matplotlib import collections as mc
 from matplotlib import pyplot as plt
 from matplotlib.patches import Rectangle
 
+from shmistogram.names import COUNT, FREQ, LB, RATE, UB
+
 # Config
 LEGEND_SPACE = 0.03
 LEGEND_MARG = 0.02
 LEGEND_SEP = 0.025
-
-LB = "lb"
-FREQ = "freq"
-RATE = "rate"
 
 
 class ShmistoGrammer:
@@ -61,12 +59,12 @@ class ShmistoGrammer:
 
     def _triage_loners(self, loners):
         self.loners = loners[~np.isnan(loners.index)]
-        self.null = loners[np.isnan(loners.index)].n_obs.sum()
+        self.null = loners[np.isnan(loners.index)][COUNT].sum()
 
     def _bin_edges(self):
         assert isinstance(self.bins, pd.DataFrame), "Bins must be a DataFrame"
         le = self.bins[LB].to_numpy()
-        re = np.array([self.bins.ub.to_numpy()[-1]])
+        re = np.array([self.bins[UB].to_numpy()[-1]])
         return np.concatenate((le, re))
 
     def _bins(self):
@@ -84,7 +82,7 @@ class ShmistoGrammer:
         return pd.Series(
             {
                 "crowd": self.bins[FREQ].sum(),
-                "loner": self.loners.n_obs.sum(),
+                "loner": self.loners[COUNT].sum(),
                 "null": self.null,
             }
         ).sort_values()
@@ -100,8 +98,8 @@ class ShmistoGrammer:
         ysep = ymax * LEGEND_SEP
         self.ax.set_ylim(0, ymax + ymarg)
         # orient legent w.r.t. horizontal axis
-        xmin = self.bins[LB].values[0]
-        xmax = self.bins.ub.values[-1]
+        xmin = self.bins[LB].to_numpy()[0]
+        xmax = self.bins[UB].to_numpy()[-1]
         w = xmax - xmin
         lxmin = xmin + w / 4
         ymin = ymax * (1 + LEGEND_MARG)
@@ -135,14 +133,14 @@ class ShmistoGrammer:
         axl.tick_params(axis="y", colors=self.colors["loner"])
         axl.set_ylabel("Loner count", color=self.colors["loner"])
         marg_mult = (self.ymax + self.ymarg) / self.ymax
-        axl.set_ylim(0, self.loners.n_obs.max() * marg_mult)
+        axl.set_ylim(0, self.loners[COUNT].max() * marg_mult)
         # add the loner count line segments
-        lines = [[(idx, 0), (idx, row.n_obs)] for idx, row in self.loners.iterrows()]
+        lines = [[(idx, 0), (idx, row[COUNT])] for idx, row in self.loners.iterrows()]
         lc = mc.LineCollection(lines, colors=self.colors["loner"], linewidths=0.6)
         axl.add_collection(lc)
         axl.plot(
-            self.loners.index.values,
-            self.loners.n_obs.values,
+            self.loners.index.to_numpy(),
+            self.loners[COUNT].to_numpy(),
             marker="o",
             color=self.colors["loner"],
             markersize=3,

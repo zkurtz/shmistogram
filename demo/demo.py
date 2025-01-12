@@ -22,7 +22,7 @@ shm = sh.Shmistogram(data)
 shm.plot()
 
 # Examine the resulting multinomial 'loner' distribution and piecewise-uniform 'crowd' distribution:
-print(shm.loners.df)
+print(shm.loners.counts)
 print(shm.bins)
 # Observe the portion of observations that are loners versus crowd:
 print(shm.loner_crowd_shares)
@@ -31,7 +31,7 @@ print(shm.loner_crowd_shares)
 # Build the shmistogram using bayesian blocks
 shm = sh.Shmistogram(data, binner=BayesianBlocks({"gamma": 0.03}, seed=0))
 # Examine the resulting multinomial 'loner' distribution and piecewise-uniform 'crowd' distribution:
-print(shm.loners.df)
+print(shm.loners.counts)
 print(shm.bins)
 # Observe the portion of observations that are loners versus crowd:
 print(shm.loner_crowd_shares)

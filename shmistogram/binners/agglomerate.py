@@ -5,7 +5,6 @@ import pandas as pd
 from scipy import stats
 
 from shmistogram.names import COUNT, LB, UB
-from shmistogram.utils import ClassUtils
 
 
 def default_params():
@@ -100,7 +99,7 @@ def collapse_one(bins, k):
     return bins_minus_one
 
 
-class Agglomerator(ClassUtils):
+class Agglomerator:
     """Agglomerative binning for shmistograms.
 
     Given a DataFrame with columns 'n_obs' and 'value', return a DataFrame

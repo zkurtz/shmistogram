@@ -9,13 +9,12 @@ from pandahandler.tabulation import Tabulation, tabulate
 
 from shmistogram.binners.det import DensityEstimationTree
 from shmistogram.plot import ShmistoGrammer
-from shmistogram.utils import ClassUtils
 
 IS_LONER = "is_loner"
 Axes = plt.Axes  # pyright: ignore[reportPrivateImportUsage]
 
 
-class Shmistogram(ClassUtils):
+class Shmistogram:
     """Shmistogram class for creating a histogram-like plot with loners and the crowd."""
 
     def __init__(
@@ -24,7 +23,6 @@ class Shmistogram(ClassUtils):
         *,
         binner: Any | None = None,
         loner_min_count: int | None = None,
-        verbose: bool = False,
     ):
         """Initialize a Shmistogram object.
 
@@ -35,25 +33,20 @@ class Shmistogram(ClassUtils):
                 eligible to be considered 'loners'
             verbose: Whether to print progress messages
         """
-        self.verbose = verbose
         self.n_obs = len(data)
         self.binner = binner or DensityEstimationTree()
         self.loner_min_count = loner_min_count or np.ceil(np.log(self.n_obs) ** 1.3)
 
         # Tabulation
-        t0 = self.timer()
         self._tabulate_loners_and_the_crowd(data)
         self.n_loners = self.loners.n_values
-        self.timer(t0, task="tabulation")
 
         # Binning
-        t0 = self.timer()
         if self.crowd.n_values > 1:
             self.bins = self.binner.fit(self.crowd.counts.to_frame())
         else:
             assert self.crowd.n_values == 0
             self.bins = None
-        self.timer(t0, task="binning")
 
         # Checks
         if (self.bins is None) or (self.bins.shape[0] == 0):

@@ -5,7 +5,6 @@ import pandas as pd
 from astropy import stats
 
 from shmistogram.names import COUNT, FREQ, LB, RATE, UB, WIDTH
-from shmistogram.utils import ClassUtils
 
 
 def default_params():
@@ -13,7 +12,7 @@ def default_params():
     return {"gamma": 0.015, "verbose": False, "sample_size": None}
 
 
-class BayesianBlocks(ClassUtils):
+class BayesianBlocks:
     """Compute a Bayesian block representation."""
 
     def __init__(self, params=None, seed: int | None = None) -> None:

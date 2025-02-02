@@ -1,22 +1,12 @@
 """Agglomerative binning for shmistograms."""
 
+from dataclasses import dataclass
+
 import numpy as np
 import pandas as pd
 from scipy import stats
 
 from shmistogram.names import COUNT, LB, UB
-from shmistogram.utils import ClassUtils
-
-
-def default_params():
-    """Return a dictionary of default parameters for the Agglomerator.
-
-    :param n_bins: hard upper bound on the number of bins in the continuous component
-        of the shmistogram
-    :param prebin_maxbins: (int) pre-bin the points as you would in a standard
-        histogram with at most `prebin_maxbins` bins to limit the computational cost
-    """
-    return {"n_bins": None, "prebin_maxbins": 100, "verbose": False}
 
 
 def rate_similarity(n1, w1, n2, w2):
@@ -100,20 +90,21 @@ def collapse_one(bins, k):
     return bins_minus_one
 
 
-class Agglomerator(ClassUtils):
+@dataclass
+class Agglomerator:
     """Agglomerative binning for shmistograms.
 
     Given a DataFrame with columns 'n_obs' and 'value', return a DataFrame
     with columns 'freq', 'lb', 'ub', 'width', and 'rate' that represents the
     bins of the shmistogram.
+
+    Attributes:
+        n_bins: hard upper bound on the number of bins in the continuous component of the shmistogram.
+        prebin_maxbins: pre-bin the points as you would in a standard histogram with at most.
     """
 
-    def __init__(self, params=None):
-        """Initialize the Agglomerator object."""
-        self.params = default_params()
-        if params is not None:
-            self.params.update(params)
-        self.verbose = self.params.pop("verbose")
+    n_bins: int | None = None
+    prebin_maxbins: int = 100
 
     def fit(self, df):
         """Given a DataFrame with columns 'n_obs' and 'value', return a DataFrame.
@@ -124,10 +115,10 @@ class Agglomerator(ClassUtils):
         self.N = df[COUNT].sum()
         self.df = df
         self._bins_init()
-        if self.params["n_bins"] is None:
+        if self.n_bins is None:
             nrow = self.df.shape[0]
-            self.params["n_bins"] = round(np.log(nrow + 1) ** 1.5)
-        while self.bins.shape[0] > self.params["n_bins"]:
+            self.n_bins = round(np.log(nrow + 1) ** 1.5)
+        while self.bins.shape[0] > self.n_bins:
             fms = forward_merge_score(self.bins)
             self.bins = collapse_one(self.bins, np.argmax(fms))
         return self.bins
@@ -144,7 +135,7 @@ class Agglomerator(ClassUtils):
         nc = self.df.shape[0]
         if nc == 0:
             return pd.DataFrame({"freq": [], LB: [], UB: [], "width": [], "rate": []})
-        prebin_maxbins = min(nc, self.params["prebin_maxbins"])
+        prebin_maxbins = min(nc, self.prebin_maxbins)
         bin_idxs = np.array_split(np.arange(nc), prebin_maxbins)
         bins = pd.DataFrame([self._bin_init(xs.tolist()) for xs in bin_idxs])
         gap_margin = (bins.lb.to_numpy()[1:] - bins.ub.to_numpy()[:-1]) / 2

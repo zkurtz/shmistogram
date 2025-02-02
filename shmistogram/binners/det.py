@@ -6,7 +6,6 @@ import numpy as np
 import pandas as pd
 
 from shmistogram.names import COUNT, VALUE
-from shmistogram.utils import ClassUtils
 
 
 def default_params():
@@ -175,7 +174,7 @@ class Node:
         self.right = Node(lb=threshold, ub=self.ub)
 
 
-class DensityEstimationTree(ClassUtils):
+class DensityEstimationTree:
     """Univariate density estimation with a binary tree."""
 
     def __init__(self, params=None):
@@ -235,7 +234,6 @@ class DensityEstimationTree(ClassUtils):
         if target_n_bins is not None:
             return n_bins < target_n_bins
         if n_bins >= self.params["max_bins"]:
-            self.vp("stopped splitting because max_bins")
             return False
         # The number of leaf nodes is the number of distinct fitted
         #   density values, essentially the k (# of parameters) in the information criterion:
@@ -244,7 +242,6 @@ class DensityEstimationTree(ClassUtils):
         threshold = self.params["lambda"] * pseudo_akaike_k
         if self.leaves.deviance_improvement.iloc[-1] > threshold:
             return True
-        self.vp("stopped splitting because lambda, information criterion")
         return False
 
     def _search_split(self, node):

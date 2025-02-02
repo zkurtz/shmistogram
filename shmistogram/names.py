@@ -2,6 +2,7 @@
 
 COUNT = "count"
 FREQ = "freq"
+IS_LONER = "is_loner"
 LB = "lb"
 RATE = "rate"
 UB = "ub"

@@ -8,9 +8,9 @@ from matplotlib import pyplot as plt
 from pandahandler.tabulation import Tabulation, tabulate
 
 from shmistogram.binners.det import DensityEstimationTree
+from shmistogram.names import IS_LONER
 from shmistogram.plot import ShmistoGrammer
 
-IS_LONER = "is_loner"
 Axes = plt.Axes  # pyright: ignore[reportPrivateImportUsage]
 
 

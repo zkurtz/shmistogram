@@ -2,8 +2,6 @@ import pandas as pd
 
 import shmistogram as shm
 from shmistogram.binners.det import DensityEstimationTree
-
-# from shmistogram.simulations import univariate
 from shmistogram.simulations.univariate import cauchy_mixture
 
 

@@ -1446,7 +1446,7 @@ wheels = [
 
 [[package]]
 name = "pandahandler"
-version = "0.4.0"
+version = "0.5.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "attrs" },
@@ -1454,9 +1454,9 @@ dependencies = [
     { name = "sigfig" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/dc/c8/c741474ea73c1b5e99848e6487523c3dab0a99c5f6f29d3af9408fd10826/pandahandler-0.4.0.tar.gz", hash = "sha256:bf2acf68779093da62f6eecd869d1c88a6cffac227f70cb7adaf9e21b9ae3b9c", size = 31876 }
+sdist = { url = "https://files.pythonhosted.org/packages/91/4d/f98c1b97863113c65dabf99bfaf0478d3b0a9fb1cc647d673bda0269d68a/pandahandler-0.5.2.tar.gz", hash = "sha256:6382ce1ab53a4e239ae488aae78e417982925ef4d66c053c89d09fe588e97732", size = 44964 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c6/4e/086625498420c7bd6e6acc358681f0dd7aa56891faf49414e0b0d6bedce3/pandahandler-0.4.0-py3-none-any.whl", hash = "sha256:21ca924426a37bb0da7f7603677c096d8fab62c16e5e6629c0534c6ca85519c8", size = 8664 },
+    { url = "https://files.pythonhosted.org/packages/87/35/cf53245a5bb0cf0000ac0b240d0a5f608081e233b86e7970e217ca6c5936/pandahandler-0.5.2-py3-none-any.whl", hash = "sha256:7f9a1ddf2ecf5ff78eead7b4cbdd2bfca0a6a9edf65c5b7bba6e9173a9e9b4e0", size = 11681 },
 ]
 
 [[package]]
@@ -2318,7 +2318,7 @@ wheels = [
 
 [[package]]
 name = "shmistogram"
-version = "1.0.0"
+version = "1.0.1"
 source = { editable = "." }
 dependencies = [
     { name = "astropy" },
@@ -2345,7 +2345,7 @@ extras = [
 requires-dist = [
     { name = "astropy", specifier = ">=3.1.2" },
     { name = "matplotlib", specifier = ">=3.0.3" },
-    { name = "pandahandler", specifier = ">=0.4.0" },
+    { name = "pandahandler", specifier = ">=0.5.2" },
     { name = "pandas", specifier = ">=1.5.0" },
     { name = "scipy", specifier = ">=1.2.1" },
 ]

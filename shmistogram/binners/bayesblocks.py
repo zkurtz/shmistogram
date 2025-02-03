@@ -1,5 +1,7 @@
 """Bayesian Blocks binning."""
 
+from typing import Any
+
 import numpy as np
 import pandas as pd
 from astropy import stats
@@ -7,45 +9,46 @@ from astropy import stats
 from shmistogram.names import COUNT, FREQ, LB, RATE, UB, WIDTH
 
 
-def default_params():
-    """Default parameters for Bayesian Blocks binning."""
-    return {"gamma": 0.015, "verbose": False, "sample_size": None}
-
-
 class BayesianBlocks:
     """Compute a Bayesian block representation."""
 
-    def __init__(self, params=None, seed: int | None = None) -> None:
+    def __init__(
+        self,
+        gamma: float = 0.015,
+        sample_size: int | None = None,
+        seed: int | None = None,
+        kwargs: dict[str, Any] | None = None,
+    ) -> None:
         """Initialize the BayesianBlocks object.
 
         Args:
-            params: Dictionary to be passed as keyword args to astropy.stats.bayesian_blocks. Pass any of the arguments
-              specified in the docs (http://docs.astropy.org/en/stable/api/astropy.stats.bayesian_blocks.html)
-              excluding `t` and `x`.
+            gamma: The gamma parameter for the Bayesian Blocks algorithm.
+            sample_size: Number of samples to use for Bayesian Blocks. If None, use all samples.
             seed: Seed for random number generator. Only used if `sample_size` is not None.
+            kwargs: Dictionary of additional keyword arguments to pass to astropy.stats.bayesian_blocks:
+                http://docs.astropy.org/en/stable/api/astropy.stats.bayesian_blocks.html
+                Feel free to pass any of these args excluding `t` and `x` (TODO explain why not those).
         """
-        self.params = default_params()
-        if params is not None:
-            self.params.update(params)
-        self.verbose = self.params.pop("verbose")
-        self.sample_size = self.params.pop("sample_size")
+        self.gamma = gamma
+        self.sample_size = sample_size
         self.seed = seed
+        self.kwargs = kwargs or {}
 
     def build_bin_edges(self, df):
         """Build bin edges using Bayesian Blocks."""
         assert df.shape[0] > 1
         vals = np.repeat(df.index.to_numpy(), df[COUNT].to_numpy())
         if self.sample_size is None:
-            bin_edges = stats.bayesian_blocks(vals, **self.params)
+            bin_edges = stats.bayesian_blocks(vals, gamma=self.gamma, **self.kwargs)
         else:
-            assert isinstance(self.sample_size, int)
-            assert self.sample_size > 10
+            if self.sample_size < 11:
+                raise ValueError("sample_size must be at least 11")
             if self.sample_size > len(vals):
-                bin_edges = stats.bayesian_blocks(vals, **self.params)
+                bin_edges = stats.bayesian_blocks(vals, gamma=self.gamma, **self.kwargs)
             else:
                 rng = np.random.default_rng(seed=self.seed)
                 svals = rng.choice(vals, size=self.sample_size, replace=False)
-                bin_edges = stats.bayesian_blocks(svals, **self.params)
+                bin_edges = stats.bayesian_blocks(svals, gamma=self.gamma, **self.kwargs)
                 bin_edges[0] = df.index.min()
                 bin_edges[-1] = df.index.max()
 

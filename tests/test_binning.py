@@ -19,7 +19,7 @@ def test_det_n_bin():
     num_bins = 4
     data = cauchy_mixture(size=size, truncate=False, seed=0)
     assert data.shape[0] == size
-    binner = DensityEstimationTree(params={"n_bins": num_bins, "min_data_in_leaf": 1})
+    binner = DensityEstimationTree(n_bins=num_bins, min_data_in_leaf=1)
     det = shm.Shmistogram(data, binner=binner)
     expected_bins = pd.DataFrame(
         {

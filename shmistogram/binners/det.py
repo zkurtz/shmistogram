@@ -4,53 +4,9 @@ import warnings
 
 import numpy as np
 import pandas as pd
+from pandahandler import indexes
 
 from shmistogram.names import COUNT, VALUE
-
-
-def default_params():
-    """Default parameters for the DensityEstimationTree.
-
-    Note that max_bins is hard upper bound on the number of bins in the continuous component of the shmistogram.
-    """
-    return {
-        "n_bins": None,
-        "max_bins": np.inf,
-        "min_data_in_leaf": int(3),
-        "lambda": 1,
-        "verbose": False,
-    }
-
-
-def check_args_expected(args, defaults):
-    """Check that the arguments are expected."""
-    if args is None:
-        return None
-    assert isinstance(args, dict)
-    invalid_params = list(set(args.keys()) - set(defaults.keys()))
-    if len(invalid_params) > 0:
-        raise Exception("you passed invalid params " + ", ".join(invalid_params))
-
-
-def accept_params(params):
-    """Accept the parameters for the DensityEstimationTree."""
-    p = default_params()
-    check_args_expected(params, p)
-    if params is None:
-        return p
-    p.update(params)
-    if (p["n_bins"] is not None) and (p["max_bins"] is not None):
-        try:
-            assert not (p["max_bins"] < p["n_bins"])
-        except Exception as err:
-            raise Exception("You must not specify max_bins less than n_bins") from err
-    if p["min_data_in_leaf"] is not None:
-        try:
-            assert isinstance(p["min_data_in_leaf"], int)
-            assert p["min_data_in_leaf"] > 0
-        except Exception as err:
-            raise Exception("min_data_in_leaf must be an integer > 0 or None") from err
-    return p
 
 
 def isclose(a, b, rel_tol=1e-12, abs_tol=0.0):
@@ -177,15 +133,35 @@ class Node:
 class DensityEstimationTree:
     """Univariate density estimation with a binary tree."""
 
-    def __init__(self, params=None):
-        """Initialize the DensityEstimationTree."""
-        self.params = accept_params(params)
-        self.verbose = self.params.pop("verbose")
+    def __init__(
+        self,
+        n_bins: int | None = None,
+        max_bins: int | None = None,
+        min_data_in_leaf: int = 3,
+        lambda_: float = 1.0,
+    ) -> None:
+        """Initialize the DensityEstimationTree.
 
-    def _accept_data(self, df):
-        self.df = df.copy()
-        self.df[VALUE] = self.df.index.to_numpy()
-        self.df.index = range(df.shape[0])
+        Args:
+            n_bins: The number of bins to use in the density estimation.
+            max_bins: The maximum number of bins to use in the density estimation.
+            min_data_in_leaf: The minimum number of data points in each leaf node.
+            lambda_: Threshold on the information gain required to justify a node split.
+        """
+        self.n_bins = n_bins
+        self.max_bins = max_bins
+        self.min_data_in_leaf = min_data_in_leaf or 1
+        self.lambda_ = lambda_
+        if n_bins is not None and max_bins is not None:
+            if max_bins < n_bins:
+                raise ValueError("You must not specify max_bins less than n_bins")
+        if min_data_in_leaf is not None:
+            if not isinstance(min_data_in_leaf, int) or min_data_in_leaf < 1:
+                raise ValueError("min_data_in_leaf must be an integer >= 1 or None")
+
+    def _accept_data(self, df: pd.DataFrame) -> None:
+        df.index.name = VALUE
+        self.df = indexes.unset(df)
 
     def _plant_the_tree(self):
         self.root = Node(
@@ -194,7 +170,7 @@ class DensityEstimationTree:
         )
         self.last_node_idx = 0
         self.nodes = {self.last_node_idx: self.root}
-        mdil = self.params["min_data_in_leaf"]
+        mdil = self.min_data_in_leaf
         splt = _search_split(self.df.copy(), min_data_in_leaf=mdil)
         self.leaves = pd.DataFrame(splt, index=pd.RangeIndex(1))
 
@@ -206,12 +182,12 @@ class DensityEstimationTree:
         self.leaves = self.leaves.sort_values("deviance_improvement")
         idx = self.leaves.idx.iloc[-1]
         val = self.leaves[VALUE].iloc[-1]
-        target_n_bins = self.params["n_bins"]
+        target_n_bins = self.n_bins
         n_bins = self.leaves.shape[0]
         if idx is None or np.isnan(idx):
             if n_bins == target_n_bins:
                 return False
-            mdil = self.params["min_data_in_leaf"]
+            mdil = self.min_data_in_leaf
             if (target_n_bins is not None) and (mdil is not None):
                 msg = (
                     f"min_data_in_leaf is {mdil}, which limits the number of bins to {n_bins} even though you "
@@ -233,19 +209,19 @@ class DensityEstimationTree:
         # Decide whether to continue splitting
         if target_n_bins is not None:
             return n_bins < target_n_bins
-        if n_bins >= self.params["max_bins"]:
+        if self.max_bins and n_bins >= self.max_bins:
             return False
         # The number of leaf nodes is the number of distinct fitted
         #   density values, essentially the k (# of parameters) in the information criterion:
         pseudo_akaike_k = n_bins
         assert (self.last_node_idx / 2) + 1 == pseudo_akaike_k  # sanity check
-        threshold = self.params["lambda"] * pseudo_akaike_k
+        threshold = self.lambda_ * pseudo_akaike_k
         if self.leaves.deviance_improvement.iloc[-1] > threshold:
             return True
         return False
 
     def _search_split(self, node):
-        mdil = self.params["min_data_in_leaf"]
+        mdil = self.min_data_in_leaf
         df = self.df.iloc[node.lb["idx"] : node.ub["idx"]].copy()
         if df.shape[0] > 1:
             return _search_split(df, lb=node.lb[VALUE], ub=node.ub[VALUE], min_data_in_leaf=mdil)
